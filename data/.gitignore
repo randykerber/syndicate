@@ -1,0 +1,7 @@
+# Ignore all runtime data but keep the structure
+*
+!.gitignore
+
+# Keep directory structure visible
+!*/
+!*/.gitkeep
