@@ -20,13 +20,13 @@
 - **Status**: Pro subscription active
 - **Capabilities**: System-level control, MCP integration, autonomous agent mode
 - **Integration**: Native MCP support, voice commands, multi-agent workflows
-- **Documentation**: [Warp Integration Details](./actors/Warp.md)
+- **Documentation**: [Warp Integration Details](actors/Warp.md)
 
 ### Raycast
 - **Status**: Installed with multiple extensions
 - **Capabilities**: Cross-app automation, 90% of target app functionality available
 - **Integration**: MCP support, voice integration, extensive ecosystem
-- **Documentation**: [Raycast Integration Details](./actors/Raycast.md)
+- **Documentation**: [Raycast Integration Details](actors/Raycast.md)
 
 ### Apple Shortcuts
 - **Capabilities**: Voice control via Siri, iOS/macOS automation, mobile workflows
@@ -38,13 +38,13 @@
 - **Status**: 1,200+ notes requiring triage
 - **Raycast Integration**: ✅ Full (create, search, edit, voice dictation, actions)
 - **Capabilities**: Text capture, automation, JavaScript API
-- **Documentation**: [Drafts Integration](./actors/Drafts.md)
+- **Documentation**: [Drafts Integration](actors/Drafts.md)
 
 ### Obsidian
 - **Status**: 7,200+ notes across Main/Tech vaults
 - **Raycast Integration**: ✅ Complete (search, create, navigate, bookmarks)
 - **Capabilities**: PKM, graph relationships, plugin ecosystem
-- **Documentation**: [Obsidian Integration](./actors/Obsidian.md)
+- **Documentation**: [Obsidian Integration](actors/Obsidian.md)
 
 ### Bear App
 - **Status**: Personal/mobile notes storage
@@ -126,7 +126,7 @@
 ### Relative Path Links (Recommended)
 ```markdown
 [Link Text](./actors/FileName.md)
-[Warp Details](./actors/Warp.md)
+[Warp Details](actors/Warp.md)
 ```
 
 ### Wiki-Style Links (Obsidian-compatible)
