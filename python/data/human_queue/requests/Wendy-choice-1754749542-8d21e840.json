@@ -1,0 +1,13 @@
+{
+  "request_id": "Wendy-choice-1754749542-8d21e840",
+  "agent_name": "Wendy",
+  "request_type": "choice",
+  "question": "Which Paris are you referring to?",
+  "options": [
+    "Paris, France",
+    "Paris, Texas"
+  ],
+  "details": {},
+  "created_at": "2025-08-09T08:25:42.890733",
+  "timeout_seconds": 300
+}

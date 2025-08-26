@@ -21,8 +21,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "openai-agents>=0.2.4",
-    "asyncio",
+    "openai-agents",
+    "openai",
+    "asyncio", 
     "requests",
     "python-dotenv",
 ]

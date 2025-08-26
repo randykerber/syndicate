@@ -1,0 +1,20 @@
+🤖 SYNDICATE AGENT REQUEST #Wendy-text_input-1755443121-08038dbf
+============================================================
+Agent: Wendy
+Type: text_input
+Created: 2025-08-17T09:05:21.350429
+Timeout: 300 seconds
+
+QUESTION:
+Where would you like the weather forecast for?
+
+============================================================
+TO RESPOND:
+1. Create file: responses/Wendy-text_input-1755443121-08038dbf-response.txt
+2. Content: Your answer (option number or text)
+3. Or use: python -c "from syndicate import HumanQueue; HumanQueue().respond('Wendy-text_input-1755443121-08038dbf', 'your answer')"
+
+EXAMPLES:
+- Option selection: "1" or "Paris, France"  
+- Approval: "yes" or "no"
+- Text input: "Any text response"

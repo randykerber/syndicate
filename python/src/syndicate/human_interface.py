@@ -53,7 +53,7 @@ class HumanResponse:
 class HumanQueue:
     """Manages async human input requests and responses."""
     
-    def __init__(self, queue_dir: str = "./syndicate_human_queue"):
+    def __init__(self, queue_dir: str = "./data/human_queue"):
         """Initialize with custom queue directory."""
         self.queue_dir = Path(queue_dir)
         self.requests_dir = self.queue_dir / "requests"
@@ -314,7 +314,7 @@ async def ask_human_choice(
     question: str, 
     options: List[str],
     timeout: int = 300,
-    queue_dir: str = "./syndicate_human_queue"
+    queue_dir: str = "./data/human_queue"
 ) -> Optional[str]:
     """Ask human to choose from options."""
     queue = HumanQueue(queue_dir)
@@ -343,7 +343,7 @@ async def ask_human_approval(
     details: str = "",
     risk_level: str = "medium",
     timeout: int = 300,
-    queue_dir: str = "./syndicate_human_queue"
+    queue_dir: str = "./data/human_queue"
 ) -> bool:
     """Ask human for approval."""
     queue = HumanQueue(queue_dir)
@@ -372,7 +372,7 @@ async def ask_human_text(
     agent_name: str,
     question: str,
     timeout: int = 300,
-    queue_dir: str = "./syndicate_human_queue"
+    queue_dir: str = "./data/human_queue"
 ) -> Optional[str]:
     """Ask human for text input."""
     queue = HumanQueue(queue_dir)

@@ -1,0 +1,24 @@
+🤖 SYNDICATE AGENT REQUEST #Wendy-choice-1754750288-6ad4dd55
+============================================================
+Agent: Wendy
+Type: choice
+Created: 2025-08-09T08:38:08.514090
+Timeout: 300 seconds
+
+QUESTION:
+Which Windsor are you referring to?
+
+OPTIONS:
+  1. Windsor, Ontario, Canada
+  2. Windsor, England
+
+============================================================
+TO RESPOND:
+1. Create file: responses/Wendy-choice-1754750288-6ad4dd55-response.txt
+2. Content: Your answer (option number or text)
+3. Or use: python -c "from syndicate import HumanQueue; HumanQueue().respond('Wendy-choice-1754750288-6ad4dd55', 'your answer')"
+
+EXAMPLES:
+- Option selection: "1" or "Paris, France"  
+- Approval: "yes" or "no"
+- Text input: "Any text response"

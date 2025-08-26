@@ -1,0 +1,10 @@
+{
+  "request_id": "Wendy-text_input-1755443121-08038dbf",
+  "agent_name": "Wendy",
+  "request_type": "text_input",
+  "question": "Where would you like the weather forecast for?",
+  "options": [],
+  "details": {},
+  "created_at": "2025-08-17T09:05:21.350429",
+  "timeout_seconds": 300
+}
