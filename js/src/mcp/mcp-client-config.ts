@@ -19,7 +19,7 @@ export interface MCPConfiguration {
  * Load MCP configuration from file with environment variable substitution
  */
 export function loadMCPConfig(configPath?: string): MCPConfiguration {
-  const defaultPath = join(process.cwd(), 'config', 'mcp-config.json');
+  const defaultPath = join(process.cwd(), '..', 'config', 'mcp-config.json');
   const path = configPath || defaultPath;
   
   try {

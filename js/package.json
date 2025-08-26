@@ -9,8 +9,8 @@
     "start": "node dist/index.js",
     "test": "echo \"Tests coming soon\"",
     "clean": "rm -rf dist",
-    "tools": "npm run build && node dist/tools/tool-inventory-only.js",
-    "tools-file": "npm run build && node dist/tools/tool-inventory-only.js > tool-inventory.txt && echo 'Report saved to tool-inventory.txt'"
+    "tools": "npm run build && node dist/tests/tool-inventory-only.js",
+    "tools-file": "npm run build && node dist/tests/tool-inventory-only.js > ../docs/js-tool-inventory.txt && echo 'Report saved to docs/js-tool-inventory.txt'"
   },
   "keywords": [],
   "author": "",

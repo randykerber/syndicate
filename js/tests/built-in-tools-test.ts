@@ -1,4 +1,4 @@
-import { openai, createSiloSlayerAgent } from '../openai-setup';
+import { openai, createSiloSlayerAgent } from './openai-setup';
 
 /**
  * Test built-in OpenAI tools to see what's actually available
@@ -48,8 +48,8 @@ async function testBuiltInTools() {
     
     if (message.tool_calls) {
       console.log('🔧 Tool calls requested:', message.tool_calls.map(tc => ({
-        name: tc.function.name,
-        args: tc.function.arguments
+        name: tc.type === 'function' ? tc.function?.name : 'unknown',
+        args: tc.type === 'function' ? tc.function?.arguments : 'unknown'
       })));
     }
 

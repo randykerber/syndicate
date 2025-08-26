@@ -1,7 +1,7 @@
 /**
  * Clean tool inventory report without server startup noise
  */
-import { ToolRegistry } from './tool-registry.js';
+import { ToolRegistry } from '../src/tools/tool-registry.js';
 
 async function printCleanInventory() {
   console.log('📊 CLEAN TOOL INVENTORY REPORT');

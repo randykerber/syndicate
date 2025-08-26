@@ -1,5 +1,5 @@
 import { createBasicToolkit } from './simple-tools';
-import { ConfiguredMCPClient } from '../mcp-client-proper';
+import { ConfiguredMCPClient } from '../mcp/mcp-client-proper';
 
 /**
  * CENTRAL TOOL REGISTRY - Single Source of Truth for All Available Tools

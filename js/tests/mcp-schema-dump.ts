@@ -1,7 +1,7 @@
 /**
  * Dump raw MCP tool schemas to see actual parameter definitions
  */
-import { ToolRegistry } from './tool-registry.js';
+import { ToolRegistry } from '../src/tools/tool-registry.js';
 
 async function dumpMCPSchemas() {
   console.log('🔍 RAW MCP TOOL SCHEMAS');

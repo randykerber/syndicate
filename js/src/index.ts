@@ -1,7 +1,7 @@
-import { testOpenAISetup } from './openai-setup';
+import { testOpenAISetup } from '../tests/openai-setup';
 
 async function main() {
-  console.log('=€ SiloSlayer Syndicate - JavaScript Edition');
+  console.log('=ï¿½ SiloSlayer Syndicate - JavaScript Edition');
   console.log('============================================');
   
   // Test OpenAI setup
