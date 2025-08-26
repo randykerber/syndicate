@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(uv run:*)",
+      "Bash(npm run tools:*)",
+      "WebSearch",
+      "Bash(rm:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:lobehub.com)",
+      "Bash(git clone:*)",
+      "Bash(make:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(sqlite3:*)",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": []
+  }
+}
