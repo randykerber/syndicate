@@ -69,9 +69,9 @@ All agents inherit conversation memory across turns:
 - `tools/simple-tools.ts` - File, system operations
 - `mcp/mcp-client-proper.ts` - MCP server communication
 
-**Tool Inventory (37 Total)**:
+**Tool Inventory (38 Total)**:
 - **Custom Tools (4)**: File ops, system commands, reminders
-- **MCP Tools (30)**: Filesystem, Obsidian, sequential-thinking, Tavily
+- **MCP Tools (31)**: Filesystem, Obsidian, sequential-thinking, Tavily, Context7
 - **OpenAI Built-ins (3)**: web_search, code_interpreter, file_search
 
 **Native Integrations** (Superior API access):
@@ -208,6 +208,16 @@ When working in this codebase:
 3. **Test human-in-the-loop flows** - AI+human parameter resolution and problem-solving
 4. **Maintain modular tools** - MCP servers should be independent and reusable
 5. **Focus on "English as programming"** - Natural input → Parameter resolution → Tool execution
+6. **Use Context7 for current docs** - When answering questions about APIs, libraries, or tools, always check Context7 first for the latest documentation before providing guidance
+
+**Context7 Usage**: Available via MCP for live API documentation. Use when discussing:
+- OpenAI SDK changes and updates
+- MCP protocol specifications  
+- Library API references
+- Tool configuration guides
+- Framework documentation
+
+Trigger phrases: "latest docs", "current API", "recent changes", or any technical question about external tools.
 
 The goal is creating AI agents that actually work with real tools through intelligent human collaboration, not just impressive demos.
 
@@ -254,6 +264,7 @@ The goal is creating AI agents that actually work with real tools through intell
 2. **Production workflows** - Connect to real Drafts processing, note routing
 3. **Context engineering** - Finalize tiered context strategy (Obsidian → tools)
 4. **Agent templates** - Expand instruction templates for different use cases
+5. **OpenAI Agents SDK session refactoring** - Explore replacing custom SQLite session persistence with new automatic conversation history feature (March 2025 release)
 
 ### 🔧 Technical Status
 
@@ -272,5 +283,12 @@ The goal is creating AI agents that actually work with real tools through intell
 - Project context: `./CLAUDE.md` (working memory, updated freely)
 - Documentation: `./docs/` (human-readable explanations)
 - Context source: `./context/` (canonical Obsidian-managed files)
+
+**Context7 Integration:**
+- Installed local MCP server: `npm i -g @upstash/context7-mcp`
+- Configured as stdio server (better than remote HTTP)
+- Available globally via user-scoped MCP configuration
+- **Usage pattern**: 2-step process (resolve-library-id → get-library-docs) - documented in global ~/.claude/CLAUDE.md
+- **Status**: ✅ Working - successfully retrieved current Claude Code and OpenAI Agents SDK documentation
 
 **Ready for focused development on core agent patterns and real-world tool integration.**
