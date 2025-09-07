@@ -20,13 +20,16 @@
     "@types/node": "^24.0.15",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "~5.9.2"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.16.0",
-    "@openai/agents": "^0.0.13",
+    "@openai/agents": "*",
     "dotenv": "^17.2.0",
-    "openai": "^5.10.1",
-    "zod": "<=3.25.67"
+    "openai": ">=5.10.1",
+    "zod": "^3.0.0"
+  },
+  "//": {
+    "zod": "Constrained to v3.x because @openai/agents requires zod@3 - v4 has breaking changes"
   }
 }
