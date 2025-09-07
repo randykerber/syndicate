@@ -52,6 +52,15 @@ dist/
 *.swo
 *~
 
+# Warp AI
+# - exclude runtime/cache data but track project config
+.warp/cache/
+.warp/logs/
+.warp/*.log
+.warp/*.tmp
+.warp/sessions/
+
+
 # OS
 .DS_Store
 .DS_Store?
