@@ -7,7 +7,6 @@ __pycache__/
 env/
 venv/
 .venv/
-.env
 pip-log.txt
 pip-delete-this-directory.txt
 .pytest_cache/
@@ -42,8 +41,6 @@ yarn-error.log*
 .yarn-integrity
 .next/
 out/
-build/
-dist/
 
 # IDEs
 .vscode/
