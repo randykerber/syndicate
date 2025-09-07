@@ -136,28 +136,39 @@ Agent: Creates note with extracted parameters
 
 ### Common Commands
 
-**Environment Setup**:
+**Python Environment Management (UV - Modern Interface Only)**:
 ```bash
 cd python/
-uv sync  # Install dependencies
+uv sync                    # Install all dependencies from pyproject.toml
+uv add package-name        # Add new dependency  
+uv remove package-name     # Remove dependency
+uv lock --upgrade && uv sync  # Update packages to latest compatible versions
+uv tree                    # Show dependency tree
 ```
 
-**Running Agents**:
+**Running Python Code**:
 ```bash
-# Test individual MCP servers
-uv run human_input_server.py
-uv run push_server.py
-uv run drafts_server.py
+# Run MCP servers
+uv run servers/human_input_server.py
+uv run servers/push_server.py  
+uv run servers/drafts_server.py
 
-# Run agents with session persistence
-python -c "from src.syndicate.agents import WeatherAgent; import asyncio; asyncio.run(WeatherAgent().chat('Paris'))"
+# Run agents
+uv run demos/wendy_weather.py
+uv run python -c "from src.syndicate.agents import WeatherAgent; import asyncio; asyncio.run(WeatherAgent().chat('Paris'))"
+
+# Run development tools
+uv run pytest              # Run tests
+uv run black .             # Format code
+uv run ruff check          # Lint code
 ```
 
 **JavaScript Commands**:
 ```bash
 cd js/
-npm run build      # Build TypeScript
-npm run tools      # Tool inventory report
+npm run build              # Build TypeScript
+npm run tools              # Tool inventory report
+npm update                 # Update packages
 ```
 
 ## Design Philosophy
@@ -209,6 +220,7 @@ When working in this codebase:
 4. **Maintain modular tools** - MCP servers should be independent and reusable
 5. **Focus on "English as programming"** - Natural input → Parameter resolution → Tool execution
 6. **Use Context7 for current docs** - When answering questions about APIs, libraries, or tools, always check Context7 first for the latest documentation before providing guidance
+7. **Use UV's modern interface only** - Always use `uv add/remove/sync/run` commands, never suggest pip/venv legacy approaches
 
 **Context7 Usage**: Available via MCP for live API documentation. Use when discussing:
 - OpenAI SDK changes and updates
