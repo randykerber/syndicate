@@ -10,7 +10,7 @@
     "tavily-search": {
       "command": "/usr/local/bin/tavily-mcp",
       "env": {
-        "TAVILY_API_KEY": "${TAVILY_API_KEY:-your-tavily-key-here}"
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
       }
     },
     "obsidian": {
