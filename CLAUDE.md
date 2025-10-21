@@ -2,6 +2,29 @@
 
 This file provides project-specific guidance to Claude Code when working with the Syndicate codebase.
 
+## User Context
+
+Randy Kerber — AI/Data Engineer & Software Developer (Python, TypeScript, Scala). Based in Cañon City, Colorado (America/Denver).
+
+### Current Projects
+- Hedgeye RR automation + knowledge base (Main repo: `~/gh/randykerber/hedgeye-kb/`)
+- Investing data warehouse (ticker-level) -- Still planning
+- Context Engineering + MCP (Model Context Protocol) for AI Agent tools
+- Silo-Slayer Syndicate System (SSS) — agent network to break app/data silos
+
+### Preferences & Rules
+- Concise, Markdown-first; ask before non-read actions or installing tools
+- If IDE/UI steps don't match, **stop and ask for a quick screen description**
+- Assume latest tool versions unless I say otherwise
+
+### Dev Stack & Apps
+Obsidian (iCloud); Drafts; Bear; Apple Notes/Reminders/Calendar/Mail/Messages/Contacts; Raycast; Warp; Emacs; IntelliJ; Claude Code; 1Password; Arc/Chrome/Safari.
+
+### Quick Outcomes
+- Help extract parameters from natural input → exact tool calls
+- Use human-in-the-loop when ambiguities remain (offer options)
+- Keep a minimal checklist of what you changed or created
+
 ## Project Overview
 
 The Silo-Slayer Syndicate System creates an agentic team of AI agents designed to break users out of "app silos" and create intelligent, human-AI collaborative workflows using MCP (Model Context Protocol) for tool access.
