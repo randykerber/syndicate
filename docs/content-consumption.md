@@ -22,9 +22,9 @@ Randy faces a major productivity challenge: daily flood of potential content (po
 - **Twitter/X**: Saved tweets/threads
 - **Blogs/Email Links**: URLs to online content
 
-## Critical Decision Point: Snipd Renewal
+## Snipd Decision (Resolved)
 
-**9-day deadline** for $84/year renewal decision. Core issue: Snipd's transcript lock-in prevents the pre-processing workflow Randy needs.
+**Decision Made**: Cancelled paid Snipd subscription. Now using Snipd as primary listening app in free mode (no transcripts, snips, or AI features). This preserves familiar listening experience while enabling development of independent CCM processing pipeline.
 
 ### Snipd Analysis
 ** Positives:**
@@ -109,16 +109,17 @@ Randy faces a major productivity challenge: daily flood of potential content (po
 
 ## Next Steps
 
-1. **Immediate Decision**: Cancel Snipd renewal by Sept 27, migrate to Fountain or Pocket Casts
+1. ✅ **Snipd Decision**: Cancelled paid subscription, using free mode for listening only
 2. **Architecture Development**: Design RSS-based filtering system using transcript APIs
 3. **Prototype**: Build episode triage workflow using universal identifiers
 4. **Integration**: Connect filtering decisions to listening app routing
+5. **OPML Management**: Created curated financial podcast subsets for testing (14 feeds in test collection)
 
 ## Related Context
 
 This CCM system aligns with Syndicate's "English as programming language" and "information liberation" mission - AI agents help extract parameters from natural input (content preferences) and execute tool calls (transcript processing, summarization) while engaging humans for disambiguation when needed.
 
-**Status**: Architecture exploration complete, ready for implementation planning and Snipd migration decision.
+**Status**: Architecture exploration complete. Snipd decision resolved (cancelled paid, using free mode for listening). Ready for CCM prototype development with curated financial podcast test set.
 
 ## OPML Export Analysis (September 20, 2025)
 
