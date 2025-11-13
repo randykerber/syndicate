@@ -1,0 +1,22 @@
+# General configuration for Hedgeye Risk Range processing
+
+paths:
+  raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/risk_range
+  markdown_output_dir: /Users/rk/d/downloads/hedgeye/prod/daily/md
+  csv_output_dir: /Users/rk/d/downloads/hedgeye/prod/daily/csv
+  combined_csv_output_dir: /Users/rk/d/downloads/hedgeye/prod/all/csv
+  plots_output_dir: /Users/rk/d/downloads/hedgeye/prod/all/plots
+  fmp_data_base_dir: /Users/rk/d/downloads/fmp/entities
+
+parsing:
+  date_format_input: "%B %d, %Y"
+  date_format_output: "%Y-%m-%d"
+  filename_prefix: "RISK RANGE"
+
+output:
+  markdown_enabled: true
+  csv_enabled: true
+  include_change_events: true
+
+plotting:
+  max_days_since_update: 7  # Only plot symbols with Risk Range data in last N days
