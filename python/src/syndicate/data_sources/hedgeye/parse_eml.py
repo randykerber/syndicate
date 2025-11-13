@@ -13,9 +13,9 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 # Internal imports
-from hedgeye_kb.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
-from hedgeye_kb.config_loader import load_config
-from hedgeye_kb.symbol_canonicalization import canonicalize_symbol
+from syndicate.data_sources.hedgeye.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
+from syndicate.data_sources.hedgeye.config_loader import load_config
+from syndicate.data_sources.hedgeye.symbol_canonicalization import canonicalize_symbol
 
 
 # --- Load configuration and secrets ---
