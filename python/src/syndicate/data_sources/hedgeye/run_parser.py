@@ -15,7 +15,7 @@ def process_single_file(file_path: str):
 
 def process_all_unprocessed():
     raw_dir = Path(RAW_EML_DIR)
-    for eml_file in raw_dir.glob("RISK RANGE*.eml"):
+    for eml_file in raw_dir.glob("risk_range_*.eml"):
         try:
             report_date, _, _ = parse_eml(str(eml_file))
             out_csv = Path(CSV_OUTPUT_DIR) / f"risk_range_{report_date}.csv"
