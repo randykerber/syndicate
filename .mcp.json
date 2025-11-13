@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "polygon": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/polygon-io/mcp_polygon@v0.4.0",
+        "mcp_polygon"
+      ]
+    },
+    "hf-mcp-server": {
+      "type": "http",
+      "url": "https://huggingface.co/mcp"
+    }
+  }
+}

@@ -16,8 +16,24 @@
       "Bash(python:*)",
       "Bash(grep:*)",
       "Bash(npm run build:*)",
-      "mcp__context7__resolve-library-id"
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(mcp discover)",
+      "Bash(cat:*)",
+      "Bash(bash -x ~/.local/bin/mcp-discover:*)",
+      "Bash(mcp sync:*)",
+      "Bash(mcp list:*)",
+      "Bash(mcp stats)",
+      "Bash(mcp show:*)",
+      "Bash(mcp used-by:*)",
+      "Bash(mcp category:*)",
+      "Bash(mcp profile:*)",
+      "Bash(mcp config:*)"
     ],
     "deny": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "polygon",
+    "hf-mcp-server"
+  ]
 }

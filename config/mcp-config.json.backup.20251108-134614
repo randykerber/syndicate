@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "/Users/rk/.local/share/fnm/node-versions/v24.11.0/installation/bin/mcp-server-filesystem",
+      "args": ["/Users/rk/gh/randykerber"]
+    },
+    "sequential-thinking": {
+      "command": "/Users/rk/.local/share/fnm/node-versions/v24.11.0/installation/bin/mcp-server-sequential-thinking"
+    },
+    "tavily-search": {
+      "command": "/Users/rk/.local/share/fnm/node-versions/v24.11.0/installation/bin/tavily-mcp",
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      }
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "obsidian-mcp", "/Users/rk/Library/Mobile Documents/iCloud~md~obsidian/Documents/Fin", "/Users/rk/Library/Mobile Documents/iCloud~md~obsidian/Documents/Tech"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp", "--api-key", "${CONTEXT7_API_KEY}"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    }
+  }
+}

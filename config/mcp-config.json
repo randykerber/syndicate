@@ -1,28 +1,7 @@
 {
-  "mcpServers": {
-    "filesystem": {
-      "command": "/usr/local/bin/mcp-server-filesystem",
-      "args": ["/Users/rk/gh/randykerber"]
-    },
-    "sequential-thinking": {
-      "command": "/usr/local/bin/mcp-server-sequential-thinking"
-    },
-    "tavily-search": {
-      "command": "/usr/local/bin/tavily-mcp",
-      "env": {
-        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
-      }
-    },
-    "obsidian": {
-      "command": "npx",
-      "args": ["-y", "obsidian-mcp", "/Users/rk/Library/Mobile Documents/iCloud~md~obsidian/Documents/Fin", "/Users/rk/Library/Mobile Documents/iCloud~md~obsidian/Documents/Tech"]
-    },
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp", "--api-key", "${CONTEXT7_API_KEY}"],
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      }
-    }
-  }
+  "$schema": "https://github.com/modelcontextprotocol/specification/blob/main/schema/mcp.schema.json",
+  "mcpRegistry": "/Users/rk/.config/mcp/registry.json",
+  "mcpProfile": "/Users/rk/.config/mcp/profiles/sss-runtime.json",
+  "note": "This file references the centralized MCP configuration system",
+  "source": "~/gh/randykerber/env/mcp/"
 }
