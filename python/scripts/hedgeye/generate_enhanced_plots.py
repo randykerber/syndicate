@@ -2,7 +2,7 @@
 """
 Generate enhanced risk range plots with latest FMP prices.
 """
-from hedgeye_kb.pipeline import run_enhanced_plots_step
+from syndicate.data_sources.hedgeye.pipeline import run_enhanced_plots_step
 
 def main():
     """Generate enhanced plots with latest FMP prices."""
