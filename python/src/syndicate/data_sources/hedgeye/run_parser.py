@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
-from hedgeye_kb.parse_eml import parse_eml, save_outputs
-from hedgeye_kb.config_loader import load_config
+from syndicate.data_sources.hedgeye.parse_eml import parse_eml, save_outputs
+from syndicate.data_sources.hedgeye.config_loader import load_config
 
 # Load config
 config = load_config()
