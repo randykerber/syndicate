@@ -12,10 +12,10 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import os
 
-from hedgeye_kb.config_loader import load_config
-from hedgeye_kb.use_rr import load_all_risk_range_data
-from hedgeye_kb.symbol_canonicalization import get_canonical_symbol_for_plotting, canonicalize_symbol
-from fmp.price_fetcher import FMPPriceFetcher, get_prices_for_symbols
+from syndicate.data_sources.hedgeye.config_loader import load_config
+from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data
+from syndicate.data_sources.hedgeye.symbol_canonicalization import get_canonical_symbol_for_plotting, canonicalize_symbol
+from syndicate.data_sources.hedgeye.fmp.price_fetcher import FMPPriceFetcher, get_prices_for_symbols
 
 def load_symbol_mappings() -> pd.DataFrame:
     """Load the Hedgeye to FMP symbol mappings."""
