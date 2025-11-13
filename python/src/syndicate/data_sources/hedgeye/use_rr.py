@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-from hedgeye_kb.config_loader import load_config
+from syndicate.data_sources.hedgeye.config_loader import load_config
 
 def load_all_risk_range_data() -> pd.DataFrame:
     config = load_config()
