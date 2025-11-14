@@ -92,17 +92,18 @@ def run_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> None
     print("\n2. Generating plots for select symbols...")
     test_symbols = ['AAPL', 'SPX', 'TSLA', 'EUR/USD', 'GOLD']
     generate_enhanced_plots(df, include_latest_prices=True, symbols_to_plot=test_symbols)
-    
-    # Option 3: Create summary dashboard
-    print("\n3. Creating summary dashboard...")
-    summary = create_summary_dashboard()
-    
-    if summary is not None and not summary.empty:
-        print("\nRisk Range Status Summary:")
-        status_summary = summary['status'].value_counts()
-        for status, count in status_summary.items():
-            print(f"  {status}: {count} symbols")
-    
+
+    # Option 3: Create summary dashboard (DISABLED - not useful currently)
+    # TODO: Redesign high-utility dashboard later
+    # print("\n3. Creating summary dashboard...")
+    # summary = create_summary_dashboard()
+    #
+    # if summary is not None and not summary.empty:
+    #     print("\nRisk Range Status Summary:")
+    #     status_summary = summary['status'].value_counts()
+    #     for status, count in status_summary.items():
+    #         print(f"  {status}: {count} symbols")
+
     print("\n✅ Enhanced plotting complete!")
 
 
