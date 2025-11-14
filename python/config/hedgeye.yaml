@@ -1,11 +1,18 @@
 # General configuration for Hedgeye Risk Range processing
 
 paths:
+  # Risk Range paths
   raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/risk_range
   markdown_output_dir: /Users/rk/d/downloads/hedgeye/prod/daily/md
   csv_output_dir: /Users/rk/d/downloads/hedgeye/prod/daily/csv
   combined_csv_output_dir: /Users/rk/d/downloads/hedgeye/prod/all/csv
   plots_output_dir: /Users/rk/d/downloads/hedgeye/prod/all/plots
+
+  # ETF Pro Plus paths
+  etf_pro_raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/etf_pro_weekly
+  etf_pro_csv_dir: /Users/rk/d/downloads/hedgeye/prod/etf_pro/csv
+
+  # Shared paths
   fmp_data_base_dir: /Users/rk/d/downloads/fmp/entities
 
 parsing:
