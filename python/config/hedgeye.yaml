@@ -12,6 +12,10 @@ paths:
   etf_pro_raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/etf_pro_weekly
   etf_pro_csv_dir: /Users/rk/d/downloads/hedgeye/prod/etf_pro/csv
 
+  # Portfolio Solutions paths
+  portfolio_solutions_raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/portfolio_solutions
+  portfolio_solutions_csv_dir: /Users/rk/d/downloads/hedgeye/prod/ps/csv
+
   # Shared paths
   fmp_data_base_dir: /Users/rk/d/downloads/fmp/entities
 
