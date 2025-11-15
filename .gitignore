@@ -57,6 +57,13 @@ out/
 .warp/*.tmp
 .warp/sessions/
 
+# Claude Code
+# - exclude machine-specific settings but track shared project config
+.claude/settings.local.json
+.claude/*.local.json
+.claude/cache/
+.claude/logs/
+.claude/sessions/
 
 # OS
 .DS_Store
