@@ -1,0 +1,345 @@
+# Silo-Slayer Syndicate Project - Cursor AI Rules
+
+## Project Context
+
+You are working on the **Silo-Slayer Syndicate System (SSS)**, an agentic AI framework designed to break users out of "app silos" and create intelligent human-AI collaborative workflows.
+
+**Core Mission**: Information Liberation through "English as Programming Language"
+- Natural language input → AI parameter extraction → Tool API calls
+- Multi-turn Human-AI dialogue to resolve ambiguity
+- Hybrid Python/JavaScript architecture connected via MCP (Model Context Protocol)
+
+**Current Focus**: Hedgeye financial data pipeline automation (email parsing → CSV → merge → enrichment)
+
+## Project Structure
+
+```
+syndicate/
+├── python/               # Agent orchestration, AI workflows, MCP servers
+│   ├── src/syndicate/
+│   │   ├── agents.py    # Base SyndicateAgent with session persistence
+│   │   ├── human_interface.py  # Human-in-the-loop system
+│   │   └── data_sources/hedgeye/  # Financial data pipeline
+│   └── servers/         # MCP servers (human-input, push, drafts, etc.)
+├── js/                  # Native tool integrations, UI components
+│   └── src/
+│       ├── agents/      # OpenAI Agent SDK examples
+│       └── tools/       # Tool registry (38 tools total)
+├── config/              # Shared MCP configuration
+├── docs/                # Documentation and working files
+└── data/                # Sample data files
+```
+
+**External Data**: `/Users/rk/d/downloads/hedgeye/` (NOT in project, use absolute paths)
+
+## Code Style & Conventions
+
+### Python (Primary Language)
+
+**Style Guide**:
+- Follow PEP 8
+- Use type hints for all function signatures
+- Line length: 88 characters (Black formatter)
+- Use descriptive variable names (no single-letter except loop counters)
+
+**Tools**:
+- Formatter: Black (`black .`)
+- Linter: Ruff (`ruff check`)
+- Type checker: MyPy (strict mode enabled)
+- Testing: Pytest with async support
+
+**Patterns**:
+```python
+# Good: Type hints, descriptive names, docstrings
+def fetch_current_prices(symbols: List[str]) -> Dict[str, float]:
+    """
+    Fetch current prices for given symbols using FMP + yfinance fallback.
+
+    Args:
+        symbols: List of ticker symbols to fetch
+
+    Returns:
+        Dict mapping symbol to current price
+    """
+    prices = {}
+    # Implementation...
+    return prices
+
+# Bad: No types, unclear names, no docs
+def get_prices(s):
+    p = {}
+    # ...
+    return p
+```
+
+**Error Handling**:
+- Use guard clauses early in functions
+- Explicit exception types (avoid bare `except:`)
+- Log errors with context, don't silently fail
+- Return None or raise exception, don't mix patterns
+
+**Async Code**:
+- Use `async/await` for I/O-bound operations
+- Prefer `asyncio.gather()` for parallel tasks
+- Always use `async with` for async context managers
+
+### JavaScript/TypeScript (Secondary Language)
+
+**Style Guide**:
+- Use TypeScript for type safety
+- Functional programming preferred over classes
+- Prefer `const` over `let`, never use `var`
+- Use destructuring and spread operators
+- Async: Use async/await, not callbacks or raw promises
+
+**Patterns**:
+```typescript
+// Good: Functional, typed, clear
+const fetchPrices = async (symbols: string[]): Promise<Map<string, number>> => {
+  const results = await Promise.all(
+    symbols.map(symbol => fetchSinglePrice(symbol))
+  );
+  return new Map(results.map((price, i) => [symbols[i], price]));
+};
+
+// Bad: Imperative, untyped, unclear
+function getPrices(s) {
+  let p = new Map();
+  for (let i = 0; i < s.length; i++) {
+    p.set(s[i], fetchSinglePrice(s[i]));
+  }
+  return p;
+}
+```
+
+## Package Management
+
+**Python**: Use `uv` (modern interface only)
+```bash
+uv sync                    # Install dependencies
+uv add package-name        # Add new dependency
+uv run python script.py    # Run with project venv
+```
+
+**Never suggest**: `pip install`, `python -m venv`, or legacy pip commands
+
+**JavaScript**: Use `npm`
+```bash
+npm install                # Install dependencies
+npm run build              # Build TypeScript
+npm run tools              # Tool inventory report
+```
+
+## Data Pipeline Conventions
+
+### Hedgeye Data Processing
+
+**File Naming**:
+- Input emails: `*.eml` in `/Users/rk/d/downloads/hedgeye/raw/eml/`
+- Processed CSVs: `*_YYYY-MM-DD.csv` in `/Users/rk/d/downloads/hedgeye/prod/`
+- Always include date in output filenames for version tracking
+
+**CSV Structure**:
+- Use pandas for all CSV operations
+- Always read with `dtype=str` first, then convert types explicitly
+- Include `report_date` column in all outputs
+- Use snake_case for column names
+
+**Price Fetching**:
+- Three-tier fallback: FMP mapping → FMP direct → yfinance
+- Use `he_to_fmp.csv` for special symbols (commodities, forex, indexes)
+- Fall back to `rr_prev_close` when live price unavailable
+- Cache daily prices in JSON format
+
+**Processing Pattern**:
+```python
+# 1. Check if already processed
+if is_processed(input_file, output_dir):
+    print(f"Already processed: {input_file}")
+    return
+
+# 2. Process
+result_df = process_data(input_file)
+
+# 3. Write output
+output_path = generate_output_path(input_file, output_dir)
+result_df.to_csv(output_path, index=False)
+
+# 4. Log success
+print(f"✓ Processed: {input_file} → {output_path}")
+```
+
+## AI Agent Development
+
+**Session Persistence**:
+- All agents inherit from `SyndicateAgent` for SQLite session storage
+- Conversation history preserved across turns
+- Use `SQLiteSession` for multi-turn workflows
+
+**Human-in-the-Loop**:
+- Use `ask_human_choice()` and `ask_human_text()` from `human_interface.py`
+- Push notifications via `push_server.py` for mobile alerts
+- File-based async queue for human responses
+
+**Instruction Templates**:
+- Use templates from `instruction_templates.py`
+- Don't hardcode agent instructions
+- Focus on parameter extraction patterns
+
+## Security & Safety
+
+**Data Protection**:
+- Never commit `.env` files or API keys
+- Use environment variables for sensitive data
+- Check `.gitignore` before committing data files
+
+**Path Safety**:
+- Use absolute paths for external data directories
+- Never use `rm -rf` without explicit user confirmation
+- Prefer `mv` over `rm` for "deleting" files (backup first)
+
+**API Keys**:
+- Store in `.env` files (gitignored)
+- Access via `python-dotenv` or `process.env`
+- Never log or print API keys
+
+## MCP (Model Context Protocol)
+
+**Server Locations**:
+- Global registry: `~/.config/mcp/servers/`
+- Project config: `./config/mcp-config.json`
+- Python servers: `./python/servers/`
+
+**Usage in Code**:
+- Use `mcp_params.py` for agent-specific server configurations
+- Reference shared config via `shared_config.py`
+- Don't hardcode server URLs or paths
+
+## Documentation
+
+**When Creating Docs**:
+- Use Markdown
+- Include code examples
+- Update flow diagrams when changing pipelines
+- Keep `docs/wip/` for temporary/scratch files
+
+**Docstring Format** (Python):
+```python
+def complex_function(arg1: str, arg2: int) -> Dict[str, Any]:
+    """
+    Brief one-line description.
+
+    Longer explanation if needed. Describe the purpose,
+    not the implementation details.
+
+    Args:
+        arg1: Description of first argument
+        arg2: Description of second argument
+
+    Returns:
+        Description of return value
+
+    Raises:
+        ValueError: When arg2 is negative
+    """
+```
+
+## Testing
+
+**Python Tests**:
+- Use pytest
+- Test files: `test_*.py` in `python/tests/`
+- Use fixtures for common setup
+- Test edge cases and error conditions
+
+**Coverage Goals**:
+- Core functions: 80%+ coverage
+- Critical paths: 100% coverage
+- Edge cases: Document why untested if skipped
+
+## Common Pitfalls to Avoid
+
+1. **Don't mix data formats**: Pick CSV or JSON for a workflow, not both
+2. **Don't skip error handling**: Always handle file not found, API failures, etc.
+3. **Don't use magic numbers**: Define constants with descriptive names
+4. **Don't commit large files**: Use `.gitignore` for data, logs, caches
+5. **Don't assume file locations**: Use config files for paths
+6. **Don't forget logging**: Use `print()` for user messages, logging for debugging
+7. **Don't break existing pipelines**: Test end-to-end after changes
+
+## Working with External Data
+
+**Hedgeye Data Location**: `/Users/rk/d/downloads/hedgeye/`
+
+**Always use absolute paths** when referencing external data:
+```python
+# Good
+BASE_DIR = "/Users/rk/d/downloads/hedgeye/prod"
+csv_path = os.path.join(BASE_DIR, "ranges", "enriched", f"position_ranges_enriched.csv")
+
+# Bad
+csv_path = "../../../d/downloads/hedgeye/prod/ranges/enriched/position_ranges_enriched.csv"
+```
+
+**Configuration over hardcoding**:
+- Define paths in `hedgeye.yaml` or similar config
+- Load config at startup
+- Use throughout codebase
+
+## When User Asks Questions
+
+**Understanding the Context**:
+- Reference CLAUDE.md for project philosophy and patterns
+- Check recent commit history for what changed
+- Look at existing code before suggesting new patterns
+
+**Providing Explanations**:
+- Start with high-level overview
+- Provide concrete examples from the codebase
+- Explain trade-offs, not just "best practices"
+- Link to relevant documentation
+
+**Making Changes**:
+- Show code diffs clearly
+- Explain why the change is needed
+- Test changes before marking complete
+- Update documentation if changing behavior
+
+## Special Instructions for Cursor
+
+**File Context**:
+- When analyzing code, read related files (imports, tests, docs)
+- Use @ symbol to reference specific files in chat
+- Consider the full pipeline, not just individual functions
+
+**Code Suggestions**:
+- Follow existing patterns in the codebase
+- Preserve type hints and docstrings
+- Match formatting (Black for Python, Prettier for JS)
+- Don't introduce new dependencies without discussion
+
+**Refactoring**:
+- Make incremental changes, not massive rewrites
+- Preserve existing functionality
+- Add tests for refactored code
+- Update documentation to match changes
+
+## Current Active Work
+
+**Hedgeye Pipeline**:
+- Email parsing (ETF Pro, Portfolio Solutions, Risk Range) → CSV
+- CSV merging (base position ranges)
+- Enrichment (live prices, proxy translations)
+- Next: Visualization of position ranges
+
+**Key Files to Know**:
+- `merge_position_ranges.py`: Combines EPP + PS + RR data
+- `enrich_position_ranges.py`: Fetches prices and calculates proxy ranges
+- `fetch_prices.py`: Multi-source price fetching with fallbacks
+- `he_to_fmp.csv`: Symbol mapping for special asset types
+
+**Recent Completion**: Position ranges pipeline now produces 100% price coverage and 75% proxy range coverage.
+
+---
+
+**Remember**: This project is about empowering users through AI-assisted information liberation. Code should be clear, maintainable, and focused on solving real workflow problems.

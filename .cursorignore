@@ -1,0 +1,159 @@
+# Cursor Ignore File
+# Excludes files/directories from Cursor AI context
+# Syntax: Same as .gitignore
+
+# ============================================================================
+# Large External Data (Not in Project)
+# ============================================================================
+# Note: These are already outside the project directory, but listed for clarity
+# /Users/rk/d/downloads/hedgeye/  (external data location)
+
+# ============================================================================
+# Build Artifacts & Dependencies
+# ============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+pip-log.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# JavaScript/Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.next/
+out/
+
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Warp AI
+.warp/cache/
+.warp/logs/
+.warp/*.log
+.warp/*.tmp
+.warp/sessions/
+
+# Claude Code
+.claude/settings.local.json
+.claude/*.local.json
+.claude/cache/
+.claude/logs/
+.claude/sessions/
+
+# ============================================================================
+# Project-Specific
+# ============================================================================
+
+# Session storage (SQLite databases)
+syndicate_sessions/
+syndicate_human_queue/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary/working docs
+docs/wip/
+docs/context7/raw/
+
+# ============================================================================
+# OS Files
+# ============================================================================
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================================================
+# Environment & Secrets
+# ============================================================================
+
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================================================================
+# Large Generated Files
+# ============================================================================
+
+# CSV files larger than 1MB (adjust if needed)
+# Uncomment if you want to exclude all CSVs:
+# *.csv
+
+# JSON cache files
+*.cache.json
+price_cache_*.json
+
+# ============================================================================
+# Version Control
+# ============================================================================
+
+.git/
+.gitignore
+
+# ============================================================================
+# Documentation Build Artifacts
+# ============================================================================
+
+# If using Sphinx or other doc generators
+docs/_build/
+docs/.doctrees/
+
+# ============================================================================
+# Test Artifacts
+# ============================================================================
+
+.tox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# ============================================================================
+# What TO INCLUDE (Don't Ignore)
+# ============================================================================
+
+# These files are important for AI context:
+# - CLAUDE.md (project instructions)
+# - .cursorrules (this configuration)
+# - README.md
+# - pyproject.toml, package.json (dependencies and config)
+# - Source code (*.py, *.ts, *.js)
+# - Configuration files (*.yaml, config/*.json)
+# - Documentation (docs/*.md)
+# - Tests (tests/*.py, src/**/*.test.ts)
