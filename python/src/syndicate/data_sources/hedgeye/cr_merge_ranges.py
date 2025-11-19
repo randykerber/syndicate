@@ -12,7 +12,7 @@ This script combines:
 Output: Clean merged CSV with all raw data, no calculations.
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.merge_position_ranges
+    uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
 """
 
 import pandas as pd
@@ -135,7 +135,7 @@ def fetch_current_prices(symbols: list) -> Dict[str, float]:
     return {}
 
 
-def merge_all_sources(
+def cr_merge_all_sources(
     epp_df: pd.DataFrame,
     ps_df: pd.DataFrame,
     rr_df: pd.DataFrame,
@@ -227,7 +227,7 @@ def merge_all_sources(
     return result_df
 
 
-def save_merged_data(df: pd.DataFrame, output_path: Path):
+def cr_save_merged_data(df: pd.DataFrame, output_path: Path):
     """Save merged DataFrame to CSV."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
@@ -280,10 +280,10 @@ def main():
     mapping_df = load_mapping_table(mapping_path)
 
     # Merge all sources
-    merged_df = merge_all_sources(epp_df, ps_df, rr_df, mapping_df)
+    merged_df = cr_merge_all_sources(epp_df, ps_df, rr_df, mapping_df)
 
     # Save merged data
-    save_merged_data(merged_df, output_path)
+    cr_save_merged_data(merged_df, output_path)
 
     print("\n" + "=" * 70)
     print("✅ Merge Complete!")

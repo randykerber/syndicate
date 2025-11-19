@@ -206,7 +206,7 @@ After the trial, answer these in `cursor-vs-jetbrains-evaluation.md`:
 
 **AI doesn't understand project**:
 - Check `.cursorrules` is in project root
-- Use @ symbol in Chat: "@enrich_position_ranges.py explain this file"
+- Use @ symbol in Chat: "@cr_enrich_ranges.py explain this file"
 
 **Missing IntelliJ refactoring**:
 - Try Cmd+K: "Refactor this function to use ..."

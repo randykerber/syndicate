@@ -115,8 +115,8 @@ Surprising: [Something that exceeded expectations]
 
 **Steps**:
 1. [ ] Parse email → CSV (`process_etf_pro_weekly.py`)
-2. [ ] Merge ranges (`merge_position_ranges.py`)
-3. [ ] Enrich with prices (`enrich_position_ranges.py`)
+2. [ ] Merge ranges (`cr_merge_ranges.py`)
+3. [ ] Enrich with prices (`cr_enrich_ranges.py`)
 4. [ ] Verify output quality
 
 **How Cursor Helped**:

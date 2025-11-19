@@ -61,7 +61,7 @@ Cursor will read your `pyproject.toml` settings:
 - Ruff linter
 - MyPy type checking
 
-**Test**: Open `enrich_position_ranges.py` and verify:
+**Test**: Open `cr_enrich_ranges.py` and verify:
 - Syntax highlighting works
 - Imports resolve correctly
 - No red squiggles on valid code
@@ -138,7 +138,7 @@ Open Cursor Settings: `Cmd + Shift + J`
 
 **What it does**: Conversational AI about your code
 **When to use**:
-- "Explain how enrich_position_ranges.py works"
+- "Explain how cr_enrich_ranges.py works"
 - "What does this error mean?"
 - "How do I add a new data source?"
 
@@ -268,8 +268,8 @@ Use this to track your experience over the week:
 
 This is your **key test**. Last time you:
 1. Ran `process_etf_pro_weekly.py` (email → CSV)
-2. Ran `merge_position_ranges.py` (merge data sources)
-3. Ran `enrich_position_ranges.py` (fetch prices, calculate ranges)
+2. Ran `cr_merge_ranges.py` (merge data sources)
+3. Ran `cr_enrich_ranges.py` (fetch prices, calculate ranges)
 
 **Try this workflow in Cursor:**
 

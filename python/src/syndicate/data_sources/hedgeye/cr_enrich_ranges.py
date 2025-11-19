@@ -12,7 +12,7 @@ This script:
 4. Saves enriched CSV with additional calculated fields
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.enrich_position_ranges
+    uv run python -m syndicate.data_sources.hedgeye.cr_enrich_ranges
 """
 
 import pandas as pd
@@ -22,14 +22,14 @@ from syndicate.data_sources.hedgeye.config_loader import load_config
 from syndicate.data_sources.hedgeye.fetch_prices import fetch_current_prices
 
 
-def load_base_merged(csv_path: Path) -> pd.DataFrame:
+def cr_load_base_merged(csv_path: Path) -> pd.DataFrame:
     """Load the base merged position ranges CSV."""
     df = pd.read_csv(csv_path)
     print(f"  ✓ Loaded {len(df)} positions from base merge")
     return df
 
 
-def add_current_prices(df: pd.DataFrame) -> pd.DataFrame:
+def cr_add_current_prices(df: pd.DataFrame) -> pd.DataFrame:
     """
     Add current prices for both p_sym and r_sym.
 
@@ -69,7 +69,7 @@ def add_current_prices(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def calculate_proxy_trade_ranges(df: pd.DataFrame) -> pd.DataFrame:
+def cr_calculate_proxy_trade_ranges(df: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate proxy-translated trade ranges.
 
@@ -119,7 +119,7 @@ def calculate_proxy_trade_ranges(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def add_interpretability_fields(df: pd.DataFrame) -> pd.DataFrame:
+def cr_add_interpretability_fields(df: pd.DataFrame) -> pd.DataFrame:
     """
     Add calculated fields to aid interpretation.
 
@@ -172,7 +172,7 @@ def add_interpretability_fields(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_enriched_data(df: pd.DataFrame, output_path: Path):
+def cr_save_enriched_data(df: pd.DataFrame, output_path: Path):
     """Save enriched DataFrame to CSV."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
@@ -181,7 +181,7 @@ def save_enriched_data(df: pd.DataFrame, output_path: Path):
     print(f"   Columns: {len(df.columns)}")
 
 
-def create_formatted_text(df: pd.DataFrame, output_path: Path):
+def cr_create_formatted_text(df: pd.DataFrame, output_path: Path):
     """Create formatted text file with aligned columns."""
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 250)
@@ -206,16 +206,16 @@ def main():
     output_csv = ranges_dir / "enriched" / "position_ranges_enriched.csv"
 
     print("\n📂 Loading Base Data...")
-    df = load_base_merged(base_csv)
+    df = cr_load_base_merged(base_csv)
 
     print("\n💰 Fetching Current Prices...")
-    df = add_current_prices(df)
+    df = cr_add_current_prices(df)
 
     print("\n🔢 Calculating Proxy Trade Ranges...")
-    df = calculate_proxy_trade_ranges(df)
+    df = cr_calculate_proxy_trade_ranges(df)
 
     print("\n📊 Adding Interpretability Fields...")
-    df = add_interpretability_fields(df)
+    df = cr_add_interpretability_fields(df)
 
     # Reorder columns for clarity
     base_cols = [
@@ -238,8 +238,8 @@ def main():
     df = df[existing_cols]
 
     # Save enriched data
-    save_enriched_data(df, output_csv)
-    create_formatted_text(df, output_csv)
+    cr_save_enriched_data(df, output_csv)
+    cr_create_formatted_text(df, output_csv)
 
     print("\n" + "=" * 70)
     print("✅ Enrichment Complete!")
