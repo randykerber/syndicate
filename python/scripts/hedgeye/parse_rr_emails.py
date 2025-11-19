@@ -6,8 +6,8 @@ Usage:
     python scripts/parse_emails.py path/to/file.eml   # Process single file
 """
 import sys
-from syndicate.data_sources.hedgeye.pipeline import run_parsing_step
-from syndicate.data_sources.hedgeye.run_parser import process_single_file
+from syndicate.data_sources.hedgeye.rr_pipeline import run_rr_parsing_step
+from syndicate.data_sources.hedgeye.run_rr_parser import process_single_file
 
 def main():
     if len(sys.argv) > 1:
@@ -17,13 +17,13 @@ def main():
             if "Could not find date in headline section" in str(e):
                 # Fallback for June 26 text format - TODO: remove when proper email restored
                 print(f"Trying text parser fallback for: {sys.argv[1]}")
-                from syndicate.data_sources.hedgeye.parse_text_email import parse_text_email
+                from syndicate.data_sources.hedgeye.parse_rr_text_email import parse_text_email
                 date, entries, changes = parse_text_email(sys.argv[1])
                 print(f"Successfully parsed {len(entries)} entries for {date}")
             else:
                 raise
     else:
-        run_parsing_step()
+        run_rr_parsing_step()
 
 if __name__ == "__main__":
     main()

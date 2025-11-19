@@ -44,7 +44,7 @@ echo ""
 echo "Next steps:"
 echo "1. Verify Cursor settings are correct (especially Warp terminal path)"
 echo "2. Update MCP server URLs if needed (in ~/.cursor/mcp.json)"
-echo "3. Test the project: cd $PROJECT_DIR && python scripts/run_full_pipeline.py"
+echo "3. Test the project: cd $PROJECT_DIR && python scripts/run_full_rr_pipeline.py"
 echo "4. Open project in Cursor and verify AGENTS.md is recognized"
 
 

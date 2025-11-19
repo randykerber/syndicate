@@ -2,10 +2,10 @@
 """
 Generate time series plots for all Risk Range symbols.
 """
-from hedgeye_kb.pipeline import run_basic_plots_step
+from syndicate.data_sources.hedgeye.rr_pipeline import run_rr_basic_plots_step
 
 def main():
-    run_basic_plots_step()
+    run_rr_basic_plots_step()
 
 if __name__ == "__main__":
     main()

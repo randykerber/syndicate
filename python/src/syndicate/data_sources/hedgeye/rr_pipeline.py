@@ -10,15 +10,15 @@ import pandas as pd
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from syndicate.data_sources.hedgeye.run_parser import main as run_parser_main
+from syndicate.data_sources.hedgeye.run_rr_parser import main as run_parser_main
 from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data, save_combined_risk_range_df, generate_all_plots
-from syndicate.data_sources.hedgeye.enhanced_plotting import generate_enhanced_plots, create_summary_dashboard
+from syndicate.data_sources.hedgeye.enhanced_rr_plotting import generate_enhanced_plots, create_summary_dashboard
 from syndicate.data_sources.hedgeye.symbol_canonicalization import canonicalize_symbol
 
 
-def run_parsing_step(file_path: Optional[str] = None) -> None:
+def run_rr_parsing_step(file_path: Optional[str] = None) -> None:
     """
-    Run the email parsing step of the pipeline.
+    Run the email parsing step of the Risk Range pipeline.
     
     Args:
         file_path: Optional path to specific .eml file. If None, processes all unprocessed files.
@@ -34,9 +34,9 @@ def run_parsing_step(file_path: Optional[str] = None) -> None:
     print("✅ Email parsing completed")
 
 
-def run_combine_step() -> pd.DataFrame:
+def run_rr_combine_step() -> pd.DataFrame:
     """
-    Run the data combination step with symbol canonicalization.
+    Run the Risk Range data combination step with symbol canonicalization.
     
     Returns:
         Combined and canonicalized DataFrame
@@ -54,9 +54,9 @@ def run_combine_step() -> pd.DataFrame:
     return df
 
 
-def run_basic_plots_step(df: Optional[pd.DataFrame] = None) -> None:
+def run_rr_basic_plots_step(df: Optional[pd.DataFrame] = None) -> None:
     """
-    Run basic plotting step.
+    Run basic Risk Range plotting step.
     
     Args:
         df: Optional DataFrame. If None, loads combined data.
@@ -70,9 +70,9 @@ def run_basic_plots_step(df: Optional[pd.DataFrame] = None) -> None:
     print("✅ Basic plotting completed")
 
 
-def run_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> None:
+def run_rr_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> None:
     """
-    Run enhanced plotting step with FMP price integration.
+    Run enhanced Risk Range plotting step with FMP price integration.
     
     Args:
         df: Optional DataFrame. If None, loads combined data.
@@ -107,7 +107,7 @@ def run_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> None
     print("\n✅ Enhanced plotting complete!")
 
 
-def run_full_pipeline(
+def run_full_rr_pipeline(
     parse_emails: bool = True,
     combine_data: bool = True, 
     generate_basic_plots: bool = False,
@@ -132,16 +132,16 @@ def run_full_pipeline(
     df = None
     
     if parse_emails:
-        run_parsing_step()
+        run_rr_parsing_step()
     
     if combine_data:
-        df = run_combine_step()
+        df = run_rr_combine_step()
     
     if generate_basic_plots:
-        run_basic_plots_step(df)
+        run_rr_basic_plots_step(df)
         
     if generate_enhanced_plots:
-        run_enhanced_plots_step(df, **kwargs)
+        run_rr_enhanced_plots_step(df, **kwargs)
     
     print("✅ Full pipeline completed")
     
@@ -154,9 +154,9 @@ def run_full_pipeline(
 
 
 # Convenience functions for common pipeline combinations
-def run_data_pipeline() -> pd.DataFrame:
-    """Run just the data processing pipeline (parse + combine)."""
-    return run_full_pipeline(
+def run_rr_data_pipeline() -> pd.DataFrame:
+    """Run just the Risk Range data processing pipeline (parse + combine)."""
+    return run_full_rr_pipeline(
         parse_emails=True,
         combine_data=True,
         generate_basic_plots=False,
@@ -164,18 +164,18 @@ def run_data_pipeline() -> pd.DataFrame:
     )
 
 
-def run_plotting_pipeline(df: Optional[pd.DataFrame] = None) -> None:
-    """Run just the plotting pipeline (enhanced plots only)."""
+def run_rr_plotting_pipeline(df: Optional[pd.DataFrame] = None) -> None:
+    """Run just the Risk Range plotting pipeline (enhanced plots only)."""
     if df is None:
         df = load_all_risk_range_data()
         df['index'] = df['index'].apply(canonicalize_symbol)
     
-    run_enhanced_plots_step(df)
+    run_rr_enhanced_plots_step(df)
 
 
-def run_refresh_pipeline() -> pd.DataFrame:
-    """Run pipeline to refresh plots with latest data (no parsing)."""
-    return run_full_pipeline(
+def run_rr_refresh_pipeline() -> pd.DataFrame:
+    """Run Risk Range pipeline to refresh plots with latest data (no parsing)."""
+    return run_full_rr_pipeline(
         parse_emails=False,
         combine_data=True,
         generate_enhanced_plots=True
