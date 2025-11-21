@@ -253,6 +253,9 @@ def main():
     output_path = ranges_dir / "base" / "position_ranges_base.csv"
 
     # Load latest EPP weekly
+    # NOTE: We use the latest EP weekly file to get the current portfolio state
+    # (LONG/SHORT positions and trend ranges). Historical tracking of EP/PS
+    # positions over time is handled separately at the parsing level.
     print("\n📂 Loading Data Sources...")
     epp_file = get_latest_file(epp_dir, "etf_pro_weekly_*.csv")
     if not epp_file:
@@ -261,6 +264,8 @@ def main():
     epp_df = load_epp_portfolio(epp_file)
 
     # Load latest PS daily
+    # NOTE: We use the latest PS daily file to get the current ranking state.
+    # Historical PS rankings are preserved in individual CSV files.
     ps_file = get_latest_file(ps_dir, "ps_daily_*.csv")
     if not ps_file:
         print("❌ No PS daily files found")
