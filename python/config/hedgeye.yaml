@@ -16,6 +16,11 @@ paths:
   portfolio_solutions_raw_eml_dir: /Users/rk/d/downloads/hedgeye/raw/eml/portfolio_solutions
   portfolio_solutions_csv_dir: /Users/rk/d/downloads/hedgeye/prod/ps/csv
 
+  # Combo Ranges (CR) paths
+  ranges_base_dir: /Users/rk/d/downloads/hedgeye/prod/ranges
+  p_to_r_mapping_file: /Users/rk/d/downloads/hedgeye/prod/ranges/p-to-r-mapping.csv
+  cr_plots_dir: /Users/rk/d/downloads/hedgeye/prod/ranges/plots/cr_timeseries
+
   # Shared paths
   fmp_data_base_dir: /Users/rk/d/downloads/fmp/entities
   fmp_mapping_file: /Users/rk/d/downloads/fmp/he_to_fmp.csv

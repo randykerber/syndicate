@@ -200,7 +200,7 @@ def main():
     print("=" * 70)
 
     config = load_config()
-    ranges_dir = Path("/Users/rk/d/downloads/hedgeye/prod/ranges")
+    ranges_dir = Path(config["paths"]["ranges_base_dir"])
 
     base_csv = ranges_dir / "base" / "position_ranges_base.csv"
     output_csv = ranges_dir / "enriched" / "position_ranges_enriched.csv"

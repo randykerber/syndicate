@@ -19,9 +19,12 @@ from syndicate.data_sources.hedgeye.fmp.price_fetcher import FMPPriceFetcher, ge
 
 def load_symbol_mappings() -> pd.DataFrame:
     """Load the Hedgeye to FMP symbol mappings."""
-    fmp_path = os.path.expanduser("~/d/downloads/fmp/he_to_fmp.csv")
+    from syndicate.data_sources.hedgeye.config_loader import load_config
     
-    if not Path(fmp_path).exists():
+    config = load_config()
+    fmp_path = Path(config["paths"]["fmp_mapping_file"])
+    
+    if not fmp_path.exists():
         raise FileNotFoundError(f"FMP mapping file not found: {fmp_path}")
         
     return pd.read_csv(fmp_path)

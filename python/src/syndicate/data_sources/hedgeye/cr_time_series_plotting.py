@@ -256,7 +256,7 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
     # Load mapping if not provided
     if mapping_df is None:
         config = load_config()
-        mapping_path = Path("/Users/rk/d/downloads/hedgeye/prod/ranges/p-to-r-mapping.csv")
+        mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
         if mapping_path.exists():
             mapping_df = pd.read_csv(mapping_path)
         else:
@@ -410,7 +410,8 @@ def plot_cr_time_series_test(tickers: list, days_back: int = 30, output_dir: Opt
         output_dir: Directory to save plots
     """
     # Load mapping
-    mapping_path = Path("/Users/rk/d/downloads/hedgeye/prod/ranges/p-to-r-mapping.csv")
+    config = load_config()
+    mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
     if mapping_path.exists():
         mapping_df = pd.read_csv(mapping_path)
     else:
@@ -481,11 +482,13 @@ def generate_all_cr_time_series_plots(
     
     # Set up output directory
     if output_dir is None:
-        output_dir = Path("/Users/rk/d/downloads/hedgeye/prod/ranges/plots/cr_timeseries")
+        config = load_config()
+        output_dir = Path(config["paths"]["cr_plots_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Load mapping table
-    mapping_path = Path("/Users/rk/d/downloads/hedgeye/prod/ranges/p-to-r-mapping.csv")
+    config = load_config()
+    mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
     if mapping_path.exists():
         mapping_df = pd.read_csv(mapping_path)
     else:
@@ -597,7 +600,7 @@ if __name__ == "__main__":
     # Limited to 30 days for debugging
     test_tickers = ["AAAU", "QQQ", "TLT", "UUP"]  # Gold, Nasdaq, Treasuries, Dollar
     config = load_config()
-    output_dir = Path("/Users/rk/d/downloads/hedgeye/prod/ranges/plots/cr_timeseries_test")
+    output_dir = Path(config["paths"]["cr_plots_dir"]).parent / "cr_timeseries_test"
     
     plot_cr_time_series_test(test_tickers, days_back=30, output_dir=output_dir)
 

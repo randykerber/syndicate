@@ -248,8 +248,8 @@ def main():
     epp_dir = Path(config["paths"]["etf_pro_csv_dir"])
     ps_dir = Path(config["paths"]["portfolio_solutions_csv_dir"])
     rr_path = Path(config["paths"]["combined_csv_output_dir"]) / "combined_risk_range.csv"
-    ranges_dir = Path("/Users/rk/d/downloads/hedgeye/prod/ranges")
-    mapping_path = ranges_dir / "p-to-r-mapping.csv"
+    ranges_dir = Path(config["paths"]["ranges_base_dir"])
+    mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
     output_path = ranges_dir / "base" / "position_ranges_base.csv"
 
     # Load latest EPP weekly
