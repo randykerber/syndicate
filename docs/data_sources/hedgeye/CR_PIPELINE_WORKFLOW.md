@@ -145,22 +145,28 @@ Translation is necessary because RR data is in r_sym coordinates but we want to 
 
 ## Running the Pipeline
 
+**Quick Reference**: See `PIPELINE_QUICK_REFERENCE.md` for a concise command cheat sheet.
+
 ```bash
-# 1. Parse new EP emails
-cd python
+# All commands run from python/ directory
+
+# 1. Process RR (Risk Range) emails
+uv run python scripts/hedgeye/run_full_rr_pipeline.py
+
+# 2. Process EP (ETF Pro Plus) weekly emails
 uv run python -m syndicate.data_sources.hedgeye.process_etf_pro_weekly
 
-# 2. Parse new PS emails
+# 3. Process PS (Portfolio Solutions) daily emails
 uv run python -m syndicate.data_sources.hedgeye.process_portfolio_solutions
 
-# 3. Merge all sources (uses latest EP/PS files)
+# 4. Merge all sources (uses latest EP/PS files)
 uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
 
-# 4. Enrich with prices
+# 5. Enrich with prices
 uv run python -m syndicate.data_sources.hedgeye.cr_enrich_ranges
 
-# 5. Generate time-series plots
-uv run python -m syndicate.data_sources.hedgeye.cr_time_series_plotting
+# 6. Generate time-series plots
+uv run python scripts/hedgeye/generate_cr_time_series_plots.py
 ```
 
 ## Data Artifacts Summary
