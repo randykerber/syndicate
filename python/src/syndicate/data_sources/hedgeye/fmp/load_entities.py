@@ -4,7 +4,7 @@
 
 import pandas as pd
 from pathlib import Path
-from hedgeye_kb.config_loader import load_config
+from syndicate.data_sources.hedgeye.config_loader import load_config
 
 # Load configuration
 config = load_config()

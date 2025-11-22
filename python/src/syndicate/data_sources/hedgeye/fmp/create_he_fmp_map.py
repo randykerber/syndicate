@@ -10,7 +10,7 @@ Generates a clean 3-column mapping table:
 
 import pandas as pd
 from pathlib import Path
-from hedgeye_kb.config_loader import load_config
+from syndicate.data_sources.hedgeye.config_loader import load_config
 from .load_entities import load_fmp_entities
 
 def get_exact_matches():
