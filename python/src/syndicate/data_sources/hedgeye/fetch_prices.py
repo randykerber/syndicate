@@ -18,6 +18,7 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+import pytz
 from syndicate.data_sources.hedgeye.config_loader import load_config
 from syndicate.data_sources.hedgeye.fmp.price_fetcher import FMPPriceFetcher
 
@@ -39,13 +40,102 @@ def get_cache_path() -> Path:
     return cache_dir / f"prices_{today}.json"
 
 
-def load_price_cache() -> Dict[str, float]:
-    """Load cached prices for today if they exist."""
+def is_market_closed_et(check_date: Optional[datetime] = None) -> bool:
+    """
+    Check if US markets are closed for the given date/time.
+    
+    Markets are closed:
+    - All weekend days (Saturday, Sunday) - markets closed all day
+    - Weekdays before 4pm ET - markets open, don't cache
+    - Weekdays after 4pm ET - markets closed, safe to cache
+    
+    Note: yfinance/FMP don't return prices for weekend dates (they skip non-trading days).
+    This function is mainly for determining if we should cache weekday prices.
+    
+    Args:
+        check_date: Datetime to check (default: now in ET)
+    
+    Returns:
+        True if markets are closed (safe to cache), False otherwise
+    """
+    et_tz = pytz.timezone('US/Eastern')
+    if check_date is None:
+        now_et = datetime.now(et_tz)
+    else:
+        # Convert to ET if needed
+        if check_date.tzinfo is None:
+            now_et = et_tz.localize(check_date)
+        else:
+            now_et = check_date.astimezone(et_tz)
+    
+    # Weekend: markets closed all day (but yfinance won't return prices for these dates anyway)
+    if now_et.weekday() >= 5:  # Saturday = 5, Sunday = 6
+        return True
+    
+    # Weekday: market closes at 4:00 PM ET
+    market_close_hour = 16
+    return now_et.hour >= market_close_hour
+
+
+def is_weekend_date(date: datetime) -> bool:
+    """
+    Check if a date falls on a weekend (Saturday or Sunday).
+    
+    Args:
+        date: Datetime to check (timezone-naive or aware)
+    
+    Returns:
+        True if weekend, False otherwise
+    """
+    # Convert to ET for consistency
+    et_tz = pytz.timezone('US/Eastern')
+    if date.tzinfo is None:
+        date_et = et_tz.localize(date)
+    else:
+        date_et = date.astimezone(et_tz)
+    
+    return date_et.weekday() >= 5  # Saturday = 5, Sunday = 6
+
+
+def should_cache_today() -> bool:
+    """
+    Determine if today's prices should be cached.
+    
+    Returns:
+        True if markets are closed (weekend or after 4pm ET on weekdays), False otherwise
+    """
+    return is_market_closed_et()
+
+
+def load_price_cache(include_today: bool = None) -> Dict[str, float]:
+    """
+    Load cached prices for today if they exist.
+    
+    Args:
+        include_today: If True, include today's cached prices even if market is open.
+                      If False, exclude today's cached prices.
+                      If None (default), auto-detect based on market close time.
+    
+    Returns:
+        Dictionary of cached prices (excluding today if market is still open)
+    """
     cache_path = get_cache_path()
-    if cache_path.exists():
-        with open(cache_path, 'r') as f:
-            return json.load(f)
-    return {}
+    if not cache_path.exists():
+        return {}
+    
+    with open(cache_path, 'r') as f:
+        cached_prices = json.load(f)
+    
+    # If markets are open and we should exclude today, return empty dict
+    # (effectively forcing fresh fetch for today)
+    if include_today is None:
+        include_today = should_cache_today()
+    
+    if not include_today:
+        # Return empty dict to force fresh fetch (but don't delete cache file yet)
+        return {}
+    
+    return cached_prices
 
 
 def save_price_cache(prices: Dict[str, float]):
@@ -203,8 +293,13 @@ def fetch_current_prices(symbols: List[str], use_cache: bool = True) -> Dict[str
     if not symbols:
         return {}
 
-    # Load cache
-    cached_prices = load_price_cache() if use_cache else {}
+    # Load cache (excludes today if markets are still open)
+    if use_cache:
+        # Don't use today's cached prices if market is still open
+        include_today = should_cache_today()
+        cached_prices = load_price_cache(include_today=include_today)
+    else:
+        cached_prices = {}
 
     # Identify symbols not in cache
     symbols_to_fetch = [s for s in symbols if s not in cached_prices]
@@ -233,10 +328,17 @@ def fetch_current_prices(symbols: List[str], use_cache: bool = True) -> Dict[str
         # Merge with cache
         all_prices = {**cached_prices, **new_prices}
 
-        # Save updated cache
+        # Save updated cache (only if markets are closed, or if explicitly caching)
         if use_cache and new_prices:
-            save_price_cache(all_prices)
-            print(f"  ✓ Cached {len(new_prices)} total new prices")
+            if should_cache_today():
+                save_price_cache(all_prices)
+                print(f"  ✓ Cached {len(new_prices)} total new prices")
+            else:
+                # Markets are open - don't cache today's prices
+                # But preserve old cache if it exists
+                if cached_prices:
+                    save_price_cache(cached_prices)
+                print(f"  ℹ️  Markets open - not caching today's prices (fetched {len(new_prices)} fresh prices)")
     else:
         print(f"  ✓ Using cached prices for all {len(symbols)} symbols")
         all_prices = cached_prices
@@ -249,6 +351,18 @@ def fetch_current_prices(symbols: List[str], use_cache: bool = True) -> Dict[str
         print(f"  ⚠️  Could not fetch prices for {len(missing)} symbols: {', '.join(sorted(missing))}")
 
     return result
+
+
+def clear_today_cache() -> None:
+    """
+    Clear today's price cache file (useful for forcing fresh prices during market hours).
+    """
+    cache_path = get_cache_path()
+    if cache_path.exists():
+        cache_path.unlink()
+        print(f"✓ Cleared today's price cache: {cache_path.name}")
+    else:
+        print(f"ℹ️  No cache file found for today: {cache_path.name}")
 
 
 if __name__ == "__main__":

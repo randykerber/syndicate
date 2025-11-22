@@ -17,7 +17,8 @@ Usage:
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Union
+import pytz
 import yfinance as yf
 
 
@@ -26,6 +27,78 @@ def get_cache_path() -> Path:
     cache_dir = Path("/Users/rk/d/downloads/hedgeye/prod/all/cache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir / "daily_prices_cache.csv"
+
+
+def is_market_closed_et(check_date: Optional[datetime] = None) -> bool:
+    """
+    Check if US markets are closed for the given date/time.
+    
+    Markets are closed:
+    - All weekend days (Saturday, Sunday) - markets closed all day
+    - Weekdays before 4pm ET - markets open, don't cache
+    - Weekdays after 4pm ET - markets closed, safe to cache
+    
+    Note: yfinance/FMP don't return prices for weekend dates (they skip non-trading days).
+    This function is mainly for determining if we should cache weekday prices.
+    
+    Args:
+        check_date: Datetime to check (default: now in ET)
+    
+    Returns:
+        True if markets are closed (safe to cache), False otherwise
+    """
+    et_tz = pytz.timezone('US/Eastern')
+    if check_date is None:
+        now_et = datetime.now(et_tz)
+    else:
+        # Convert to ET if needed
+        if check_date.tzinfo is None:
+            now_et = et_tz.localize(check_date)
+        else:
+            now_et = check_date.astimezone(et_tz)
+    
+    # Weekend: markets closed all day (but yfinance won't return prices for these dates anyway)
+    if now_et.weekday() >= 5:  # Saturday = 5, Sunday = 6
+        return True
+    
+    # Weekday: market closes at 4:00 PM ET
+    market_close_hour = 16
+    return now_et.hour >= market_close_hour
+
+
+def is_weekend_date(date: datetime) -> bool:
+    """
+    Check if a date falls on a weekend (Saturday or Sunday).
+    
+    Args:
+        date: Datetime to check (timezone-naive or aware)
+    
+    Returns:
+        True if weekend, False otherwise
+    """
+    # Convert to ET for consistency
+    et_tz = pytz.timezone('US/Eastern')
+    if date.tzinfo is None:
+        date_et = et_tz.localize(date)
+    else:
+        date_et = date.astimezone(et_tz)
+    
+    return date_et.weekday() >= 5  # Saturday = 5, Sunday = 6
+
+
+def should_cache_today() -> bool:
+    """
+    Determine if today's prices should be cached.
+    
+    Returns:
+        True if markets are closed (weekend or after 4pm ET on weekdays), False otherwise
+    """
+    return is_market_closed_et()
+
+
+def get_today_date() -> datetime:
+    """Get today's date as timezone-naive datetime."""
+    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def load_cache() -> pd.DataFrame:
@@ -122,10 +195,19 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
         # Load cache
         cache_df = load_cache()
         
+        # Get today's date for filtering
+        today = get_today_date()
+        
         if not cache_df.empty:
             # Ensure dates are datetime and normalized
             cache_df['date'] = pd.to_datetime(cache_df['date']).dt.normalize()
             needed['date'] = pd.to_datetime(needed['date']).dt.normalize()
+            
+            # If markets are still open (weekday before 4pm ET), exclude today's cached prices
+            # (force fresh fetch for today)
+            # Weekend dates are OK to use from cache (markets closed all day)
+            if not should_cache_today():
+                cache_df = cache_df[cache_df['date'] != today]
             
             # Find what we have in cache
             merged = needed.merge(cache_df, on=['date', 'ticker'], how='left')
@@ -165,20 +247,54 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
             else:
                 result_df = fetched_df
             
-            # Update cache with new prices
+            # Update cache with new prices (only if markets are closed for today's prices)
             if use_cache and not fetched_df.empty:
-                if not cache_df.empty:
-                    # Remove old entries for these (date, ticker) pairs and add new ones
-                    # Create index for comparison
-                    fetched_idx = fetched_df.set_index(['date', 'ticker']).index
-                    cache_idx = cache_df.set_index(['date', 'ticker']).index
-                    cache_df = cache_df[~cache_idx.isin(fetched_idx)]
-                    updated_cache = pd.concat([cache_df, fetched_df], ignore_index=True)
-                else:
-                    updated_cache = fetched_df
+                today = get_today_date()
                 
-                save_cache(updated_cache)
-                print(f"  ✓ Updated cache with {len(fetched_df)} new prices")
+                # Normalize dates for comparison
+                fetched_df['date'] = pd.to_datetime(fetched_df['date']).dt.normalize()
+                
+                # Separate today's prices from historical prices
+                today_prices = fetched_df[fetched_df['date'] == today].copy()
+                historical_prices = fetched_df[fetched_df['date'] != today].copy()
+                
+                # Always cache historical prices
+                prices_to_cache = historical_prices.copy() if not historical_prices.empty else pd.DataFrame(columns=['date', 'ticker', 'price'])
+                
+                # Only cache today's prices if markets are closed
+                if not today_prices.empty:
+                    if should_cache_today():
+                        if prices_to_cache.empty:
+                            prices_to_cache = today_prices
+                        else:
+                            prices_to_cache = pd.concat([prices_to_cache, today_prices], ignore_index=True)
+                        print(f"  ℹ️  Markets closed - caching today's prices ({len(today_prices)} prices)")
+                    else:
+                        print(f"  ℹ️  Markets open - not caching today's prices ({len(today_prices)} prices)")
+                
+                if not prices_to_cache.empty:
+                    # Reload full cache (unfiltered) to get current state
+                    current_cache = load_cache()
+                    
+                    if not current_cache.empty:
+                        # Normalize dates
+                        current_cache['date'] = pd.to_datetime(current_cache['date']).dt.normalize()
+                        
+                        # If markets are open, remove today's prices from cache before updating
+                        # (they shouldn't be there, but just in case)
+                        if not should_cache_today():
+                            current_cache = current_cache[current_cache['date'] != today]
+                        
+                        # Remove old entries for these (date, ticker) pairs and add new ones
+                        prices_to_cache_idx = prices_to_cache.set_index(['date', 'ticker']).index
+                        cache_idx = current_cache.set_index(['date', 'ticker']).index
+                        current_cache = current_cache[~cache_idx.isin(prices_to_cache_idx)]
+                        updated_cache = pd.concat([current_cache, prices_to_cache], ignore_index=True)
+                    else:
+                        updated_cache = prices_to_cache
+                    
+                    save_cache(updated_cache)
+                    print(f"  ✓ Updated cache with {len(prices_to_cache)} new prices")
         else:
             result_df = cached if not cached.empty else pd.DataFrame(columns=['date', 'ticker', 'price'])
     else:
@@ -192,6 +308,33 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
     ].sort_values(['date', 'ticker']).reset_index(drop=True)
     
     return result_df
+
+
+def clear_today_cache() -> None:
+    """
+    Clear today's prices from the cache (useful for forcing fresh prices during market hours).
+    """
+    today = get_today_date()
+    cache_df = load_cache()
+    
+    if cache_df.empty:
+        print(f"ℹ️  Cache is empty - nothing to clear")
+        return
+    
+    # Count prices before
+    before_count = len(cache_df)
+    
+    # Remove today's prices
+    cache_df['date'] = pd.to_datetime(cache_df['date']).dt.normalize()
+    today_prices = cache_df[cache_df['date'] == today]
+    cache_df = cache_df[cache_df['date'] != today]
+    
+    removed_count = len(today_prices)
+    
+    # Save updated cache
+    save_cache(cache_df)
+    
+    print(f"✓ Removed {removed_count} today's prices from cache ({len(cache_df)} prices remaining)")
 
 
 if __name__ == "__main__":
