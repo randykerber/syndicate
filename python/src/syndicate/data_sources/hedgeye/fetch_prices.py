@@ -18,9 +18,13 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
-import pytz
 from syndicate.data_sources.hedgeye.config_loader import load_config
 from syndicate.data_sources.hedgeye.fmp.price_fetcher import FMPPriceFetcher
+from syndicate.data_sources.hedgeye.price_utils import (
+    is_market_closed_et,
+    is_weekend_date,
+    should_cache_today,
+)
 
 try:
     import yfinance as yf
@@ -32,79 +36,12 @@ except ImportError:
 def get_cache_path() -> Path:
     """Get path to daily price cache file."""
     config = load_config()
-    cache_dir = Path(config["paths"]["combined_csv_output_dir"]).parent / "cache"
+    cache_dir = Path(config["paths"]["cache_dir"])
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     # Use today's date in cache filename
     today = datetime.now().strftime("%Y-%m-%d")
     return cache_dir / f"prices_{today}.json"
-
-
-def is_market_closed_et(check_date: Optional[datetime] = None) -> bool:
-    """
-    Check if US markets are closed for the given date/time.
-    
-    Markets are closed:
-    - All weekend days (Saturday, Sunday) - markets closed all day
-    - Weekdays before 4pm ET - markets open, don't cache
-    - Weekdays after 4pm ET - markets closed, safe to cache
-    
-    Note: yfinance/FMP don't return prices for weekend dates (they skip non-trading days).
-    This function is mainly for determining if we should cache weekday prices.
-    
-    Args:
-        check_date: Datetime to check (default: now in ET)
-    
-    Returns:
-        True if markets are closed (safe to cache), False otherwise
-    """
-    et_tz = pytz.timezone('US/Eastern')
-    if check_date is None:
-        now_et = datetime.now(et_tz)
-    else:
-        # Convert to ET if needed
-        if check_date.tzinfo is None:
-            now_et = et_tz.localize(check_date)
-        else:
-            now_et = check_date.astimezone(et_tz)
-    
-    # Weekend: markets closed all day (but yfinance won't return prices for these dates anyway)
-    if now_et.weekday() >= 5:  # Saturday = 5, Sunday = 6
-        return True
-    
-    # Weekday: market closes at 4:00 PM ET
-    market_close_hour = 16
-    return now_et.hour >= market_close_hour
-
-
-def is_weekend_date(date: datetime) -> bool:
-    """
-    Check if a date falls on a weekend (Saturday or Sunday).
-    
-    Args:
-        date: Datetime to check (timezone-naive or aware)
-    
-    Returns:
-        True if weekend, False otherwise
-    """
-    # Convert to ET for consistency
-    et_tz = pytz.timezone('US/Eastern')
-    if date.tzinfo is None:
-        date_et = et_tz.localize(date)
-    else:
-        date_et = date.astimezone(et_tz)
-    
-    return date_et.weekday() >= 5  # Saturday = 5, Sunday = 6
-
-
-def should_cache_today() -> bool:
-    """
-    Determine if today's prices should be cached.
-    
-    Returns:
-        True if markets are closed (weekend or after 4pm ET on weekdays), False otherwise
-    """
-    return is_market_closed_et()
 
 
 def load_price_cache(include_today: bool = None) -> Dict[str, float]:
@@ -147,9 +84,10 @@ def save_price_cache(prices: Dict[str, float]):
 
 def load_he_to_fmp_mapping() -> pd.DataFrame:
     """Load the Hedgeye to FMP symbol mappings."""
-    fmp_path = os.path.expanduser("~/d/downloads/fmp/he_to_fmp.csv")
+    config = load_config()
+    fmp_path = Path(config["paths"]["fmp_mapping_file"])
 
-    if not Path(fmp_path).exists():
+    if not fmp_path.exists():
         print(f"  ⚠️  FMP mapping file not found: {fmp_path}")
         return pd.DataFrame(columns=['he_symbol', 'fmp_etype', 'fmp_symbol'])
 

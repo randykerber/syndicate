@@ -18,6 +18,8 @@ paths:
 
   # Shared paths
   fmp_data_base_dir: /Users/rk/d/downloads/fmp/entities
+  fmp_mapping_file: /Users/rk/d/downloads/fmp/he_to_fmp.csv
+  cache_dir: /Users/rk/d/downloads/hedgeye/prod/all/cache
 
 parsing:
   date_format_input: "%B %d, %Y"
