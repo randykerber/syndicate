@@ -13,24 +13,24 @@ base_paths:
 
 paths:
   # Risk Range paths
-  raw_eml_dir: ${raw_root}/eml/RR
-  markdown_output_dir: ${prod_root}/RR/daily/md
-  csv_output_dir: ${prod_root}/RR/daily/csv
-  combined_csv_output_dir: ${prod_root}/RR/all/csv
-  plots_output_dir: ${plot_root}/RR
+  raw_eml_dir: ${raw_root}/eml/rr
+  markdown_output_dir: ${prod_root}/rr/daily/md
+  csv_output_dir: ${prod_root}/rr/daily/csv
+  combined_csv_output_dir: ${prod_root}/rr/all/csv
+  plots_output_dir: ${plot_root}/rr
 
   # ETF Pro paths
-  etf_pro_raw_eml_dir: ${raw_root}/eml/EP/weekly
-  etf_pro_csv_dir: ${prod_root}/EP/csv
+  etf_pro_raw_eml_dir: ${raw_root}/eml/ep/weekly
+  etf_pro_csv_dir: ${prod_root}/ep/csv
 
   # Portfolio Solutions paths
-  portfolio_solutions_raw_eml_dir: ${raw_root}/eml/P
-  portfolio_solutions_csv_dir: ${prod_root}/PS/csv
+  portfolio_solutions_raw_eml_dir: ${raw_root}/eml/ps
+  portfolio_solutions_csv_dir: ${prod_root}/ps/csv
 
   # Combo Ranges (CR) paths
-  ranges_base_dir: ${prod_root}/CR/ranges
+  ranges_base_dir: ${prod_root}/cr/ranges
   p_to_r_mapping_file: ${project_root}/config/hedgeye/data/p-to-r-mapping.yaml
-  cr_plots_dir: ${plot_root}/DR/ranges/cr_timeseries
+  cr_plots_dir: ${plot_root}/cr/ranges/cr_timeseries
 
   # Shared paths
   fmp_data_base_dir: ${fmp_root}/entities
