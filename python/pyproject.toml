@@ -51,7 +51,11 @@ Repository = "https://github.com/randykerber/syndicate"
 Documentation = "https://github.com/randykerber/syndicate/docs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/syndicate"]
+packages = [
+    "src/syndicate",
+    "src/sss",
+    "src/hedgeye"
+]
 
 [tool.black]
 line-length = 88
