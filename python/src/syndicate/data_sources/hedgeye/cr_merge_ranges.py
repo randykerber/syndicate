@@ -87,15 +87,61 @@ def load_rr_data(csv_path: Path) -> pd.DataFrame:
     return df
 
 
-def load_mapping_table(csv_path: Path) -> pd.DataFrame:
+def load_mapping_table(mapping_path: Path) -> pd.DataFrame:
     """
-    Load p_sym to r_sym mapping table.
+    Load p_sym to r_sym mapping table from YAML or CSV file.
+    
+    Supports both YAML (preferred) and CSV formats for backward compatibility.
+    All access to the mapping file should go through this function.
 
-    Returns DataFrame with columns:
-    p_sym, r_sym, mapping_type, proxy_type, confidence, notes
+    Args:
+        mapping_path: Path to mapping file (.yaml or .csv)
+
+    Returns:
+        DataFrame with columns:
+        p_sym, r_sym, mapping_type, proxy_type, confidence, notes, inverted
     """
-    df = pd.read_csv(csv_path)
-    print(f"  ✓ Loaded {len(df)} symbol mappings")
+    import yaml
+    
+    if not mapping_path.exists():
+        raise FileNotFoundError(f"Mapping file not found: {mapping_path}")
+    
+    # Determine file type and load accordingly
+    if mapping_path.suffix.lower() in ['.yaml', '.yml']:
+        # Load from YAML
+        with open(mapping_path, 'r') as f:
+            yaml_data = yaml.safe_load(f)
+        
+        # Convert YAML structure to DataFrame
+        mappings = yaml_data.get('mappings', [])
+        if not mappings:
+            return pd.DataFrame(columns=['p_sym', 'r_sym', 'mapping_type', 'confidence', 'notes', 'proxy_type', 'inverted'])
+        
+        # Convert list of dicts to DataFrame
+        df = pd.DataFrame(mappings)
+        
+        # Ensure all expected columns exist
+        expected_cols = ['p_sym', 'r_sym', 'mapping_type', 'confidence', 'notes', 'proxy_type', 'inverted']
+        for col in expected_cols:
+            if col not in df.columns:
+                df[col] = None
+        
+        # Convert None/empty r_sym to empty string for consistency
+        df['r_sym'] = df['r_sym'].fillna('')
+        
+        # Ensure inverted is boolean
+        df['inverted'] = df['inverted'].fillna(False).astype(bool)
+        
+    else:
+        # Load from CSV (backward compatibility)
+        df = pd.read_csv(mapping_path)
+        # Fill NaN values for consistency
+        df['r_sym'] = df['r_sym'].fillna('')
+        if 'inverted' not in df.columns:
+            df['inverted'] = False
+        df['inverted'] = df['inverted'].fillna(False).astype(bool)
+    
+    print(f"  ✓ Loaded {len(df)} symbol mappings from {mapping_path.suffix}")
     return df
 
 

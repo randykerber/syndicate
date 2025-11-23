@@ -1,0 +1,274 @@
+mappings:
+- p_sym: AAAU
+  r_sym: GOLD
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: AQWA
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: BBN
+  r_sym: UST10Y
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: loose
+  inverted: true
+- p_sym: BTAL
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: BUXX
+  r_sym: UST2Y
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: loose
+  inverted: true
+- p_sym: CANE
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: CLOX
+  r_sym: UST5Y
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: loose
+  inverted: true
+- p_sym: CLOZ
+  r_sym: UST5Y
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: loose
+  inverted: true
+- p_sym: CPER
+  r_sym: COPPER
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: EPHE
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: EWL
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: FXC
+  r_sym: CAD/USD
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: FXE
+  r_sym: EUR/USD
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: FXY
+  r_sym: USD/YEN
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: GDX
+  r_sym: GDX
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: GREK
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: GRID
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: IAK
+  r_sym: IAK
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: IWM
+  r_sym: RUT
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: LQD
+  r_sym: LQD
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: MAGS
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: MSTY
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: PALL
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: high
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: PFIX
+  r_sym: UST10Y
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: very_loose
+  inverted: true
+- p_sym: PINK
+  r_sym: PINK
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: loose
+  inverted: false
+- p_sym: PSCC
+  r_sym: XLP
+  mapping_type: inferred
+  confidence: low
+  notes: NEEDS MANUAL REVIEW
+  proxy_type: loose
+  inverted: false
+- p_sym: QQQ
+  r_sym: COMPQ
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: QTUM
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: ROBO
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: SLV
+  r_sym: SILVER
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: SLX
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: TLT
+  r_sym: UST30Y
+  mapping_type: inferred
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: loose
+  inverted: true
+- p_sym: UFO
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: UUP
+  r_sym: USD
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false
+- p_sym: WOOD
+  r_sym: null
+  mapping_type: no_coverage
+  confidence: low
+  notes: Not covered by RR data
+  proxy_type: na
+  inverted: false
+- p_sym: XLI
+  r_sym: XLI
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: XLP
+  r_sym: XLP
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: XLV
+  r_sym: XLV
+  mapping_type: direct
+  confidence: high
+  notes: Symbol exists in both p-symbols and r-symbols
+  proxy_type: tight
+  inverted: false
+- p_sym: YCS
+  r_sym: USD/YEN
+  mapping_type: inferred
+  confidence: medium
+  notes: Inferred from instrument type
+  proxy_type: tight
+  inverted: false

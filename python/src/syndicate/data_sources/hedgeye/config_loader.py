@@ -17,13 +17,16 @@ def load_config():
     
     base_paths:
       prod_root: /Users/rk/d/downloads/hedgeye/prod
+      project_root: /Users/rk/gh/randykerber/syndicate/python
     
     paths:
       ranges_dir: ${prod_root}/ranges
+      mapping_file: ${project_root}/config/hedgeye/data/p-to-r-mapping.yaml
     
-    Will resolve to: /Users/rk/d/downloads/hedgeye/prod/ranges
+    Will resolve to the substituted paths.
     """
     config_path = Path(__file__).resolve().parents[4] / "config" / "hedgeye.yaml"
+    
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     

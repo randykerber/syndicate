@@ -24,6 +24,7 @@ from syndicate.data_sources.hedgeye.config_loader import load_config
 from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data
 from syndicate.data_sources.hedgeye.cr_enrich_ranges import cr_calculate_proxy_trade_ranges
 from syndicate.data_sources.hedgeye.price_cache import get_daily_prices
+from syndicate.data_sources.hedgeye.cr_merge_ranges import load_mapping_table
 
 try:
     import yfinance as yf
@@ -413,7 +414,7 @@ def plot_cr_time_series_test(tickers: list, days_back: int = 30, output_dir: Opt
     config = load_config()
     mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
     if mapping_path.exists():
-        mapping_df = pd.read_csv(mapping_path)
+        mapping_df = load_mapping_table(mapping_path)
     else:
         print(f"⚠️  Mapping file not found: {mapping_path}")
         mapping_df = pd.DataFrame()
@@ -490,7 +491,7 @@ def generate_all_cr_time_series_plots(
     config = load_config()
     mapping_path = Path(config["paths"]["p_to_r_mapping_file"])
     if mapping_path.exists():
-        mapping_df = pd.read_csv(mapping_path)
+        mapping_df = load_mapping_table(mapping_path)
     else:
         print(f"⚠️  Mapping file not found: {mapping_path}")
         mapping_df = pd.DataFrame()
