@@ -129,6 +129,8 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
         for date in date_range
         for ticker in tickers
     ])
+    # Normalize dates immediately (remove timezone and time components)
+    needed['date'] = pd.to_datetime(needed['date']).dt.normalize()
     
     if use_cache:
         # Load cache
@@ -138,9 +140,9 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
         today = get_today_date()
         
         if not cache_df.empty:
-            # Ensure dates are datetime and normalized
+            # Ensure cache dates are datetime and normalized
             cache_df['date'] = pd.to_datetime(cache_df['date']).dt.normalize()
-            needed['date'] = pd.to_datetime(needed['date']).dt.normalize()
+            # needed dates are already normalized above
             
             # If markets are still open (weekday before 4pm ET), exclude today's cached prices
             # (force fresh fetch for today)
@@ -170,13 +172,21 @@ def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetim
         fetched_df = fetch_prices_from_yfinance(unique_tickers, start_date, end_date)
         
         if not fetched_df.empty:
+            # Normalize dates immediately after fetching (remove timezone and time components)
+            fetched_df['date'] = pd.to_datetime(fetched_df['date']).dt.normalize()
+            
+            # Normalize start/end dates for comparison
+            start_date_norm = pd.to_datetime(start_date).normalize()
+            end_date_norm = pd.to_datetime(end_date).normalize()
+            
             # Filter fetched to only dates within our requested range
             fetched_df = fetched_df[
-                (fetched_df['date'] >= start_date) & 
-                (fetched_df['date'] <= end_date)
+                (fetched_df['date'] >= start_date_norm) & 
+                (fetched_df['date'] <= end_date_norm)
             ]
             
             # Filter to only missing dates (avoid duplicates with cache)
+            # missing dates are already normalized (from needed)
             if not missing.empty:
                 fetched_df = fetched_df.merge(missing, on=['date', 'ticker'], how='inner')
             
