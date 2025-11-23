@@ -6,35 +6,36 @@ base_paths:
   # Project root - auto-detected from config file location, but can be overridden
   # Change this if you move the project to a different location
   project_root: /Users/rk/gh/randykerber/syndicate/python
-  prod_root: /Users/rk/d/downloads/hedgeye/prod
   raw_root: /Users/rk/d/downloads/hedgeye/raw
   fmp_root: /Users/rk/d/downloads/fmp
+  prod_root: /Users/rk/d/prod/hedgeye
+  plot_root: /Users/rk/d/view/hedgeye/plots
 
 paths:
   # Risk Range paths
-  raw_eml_dir: ${raw_root}/eml/risk_range
-  markdown_output_dir: ${prod_root}/daily/md
-  csv_output_dir: ${prod_root}/daily/csv
-  combined_csv_output_dir: ${prod_root}/all/csv
-  plots_output_dir: ${prod_root}/all/plots
+  raw_eml_dir: ${raw_root}/eml/RR
+  markdown_output_dir: ${prod_root}/RR/daily/md
+  csv_output_dir: ${prod_root}/RR/daily/csv
+  combined_csv_output_dir: ${prod_root}/RR/all/csv
+  plots_output_dir: ${plot_root}/RR
 
-  # ETF Pro Plus paths
-  etf_pro_raw_eml_dir: ${raw_root}/eml/etf_pro_weekly
-  etf_pro_csv_dir: ${prod_root}/etf_pro/csv
+  # ETF Pro paths
+  etf_pro_raw_eml_dir: ${raw_root}/eml/EP/weekly
+  etf_pro_csv_dir: ${prod_root}/EP/csv
 
   # Portfolio Solutions paths
-  portfolio_solutions_raw_eml_dir: ${raw_root}/eml/portfolio_solutions
-  portfolio_solutions_csv_dir: ${prod_root}/ps/csv
+  portfolio_solutions_raw_eml_dir: ${raw_root}/eml/P
+  portfolio_solutions_csv_dir: ${prod_root}/PS/csv
 
   # Combo Ranges (CR) paths
-  ranges_base_dir: ${prod_root}/ranges
+  ranges_base_dir: ${prod_root}/CR/ranges
   p_to_r_mapping_file: ${project_root}/config/hedgeye/data/p-to-r-mapping.yaml
-  cr_plots_dir: ${prod_root}/ranges/plots/cr_timeseries
+  cr_plots_dir: ${plot_root}/DR/ranges/cr_timeseries
 
   # Shared paths
   fmp_data_base_dir: ${fmp_root}/entities
   fmp_mapping_file: ${fmp_root}/he_to_fmp.csv
-  cache_dir: ${prod_root}/all/cache
+  cache_dir: ${prod_root}/cache
 
 parsing:
   date_format_input: "%B %d, %Y"
