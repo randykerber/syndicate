@@ -19,7 +19,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, List
 from hedgeye.config_loader import load_config
-from hedgeye.fetch_prices import fetch_current_prices
+from hedgeye.ds.prices.fetch_prices import fetch_current_prices
 
 
 def cr_load_base_merged(csv_path: Path) -> pd.DataFrame:

@@ -4,7 +4,7 @@ from typing import List, Tuple
 from email import policy
 from email.parser import BytesParser
 
-from hedgeye_kb.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
+from hedgeye.ds.rr.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
 
 
 def parse_eml(filepath: str) -> Tuple[str, List[RiskRangeEntry], List[ChangeEvent]]:

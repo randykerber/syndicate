@@ -9,7 +9,7 @@ from mcp.server.fastmcp import FastMCP
 from typing import List, Dict, Optional
 from datetime import datetime
 import json
-from src.syndicate.human_interface import ask_human_choice, ask_human_approval, ask_human_text
+from sss.human_interface import ask_human_choice, ask_human_approval, ask_human_text
 
 mcp = FastMCP("human_input_server")
 

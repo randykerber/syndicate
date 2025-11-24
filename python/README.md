@@ -27,7 +27,7 @@ python -m pytest tests/
 ## Usage
 
 ```python
-from syndicate import SyndicateAgent
+from sss import SyndicateAgent
 
 agent = SyndicateAgent(
     name="ContentRouter",

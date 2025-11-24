@@ -22,7 +22,7 @@ import numpy as np
 
 from hedgeye.config_loader import load_config
 from hedgeye.ds.rr.use_rr import load_all_risk_range_data
-from hedgeye.price_cache import get_daily_prices
+from hedgeye.ds.prices.price_cache import get_daily_prices
 from hedgeye.ds.cr.cr_merge_ranges import load_mapping_table
 
 try:
@@ -514,7 +514,7 @@ def generate_all_cr_time_series_plots(
     start_date = end_date - timedelta(days=days_back)
     
     print(f"\n💰 Pre-fetching prices for all tickers...")
-    from hedgeye.price_cache import get_daily_prices
+    from hedgeye.ds.prices.price_cache import get_daily_prices
     all_prices_df = get_daily_prices(all_tickers, start_date, end_date, use_cache=True)
     print(f"   ✓ Pre-fetched prices for {all_prices_df['ticker'].nunique()} tickers")
     

@@ -7,8 +7,8 @@ Handles plain text format from iCloud Mail copy-paste.
 import re
 from datetime import datetime
 from typing import List, Tuple, Optional
-from hedgeye_kb.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
-from hedgeye_kb.symbol_canonicalization import canonicalize_symbol
+from hedgeye.ds.rr.models import RiskRangeEntry, ChangeEvent, Trend, Bucket
+from hedgeye.ds.rr.symbol_canonicalization import canonicalize_symbol
 
 def standardize_date(date_str: str) -> str:
     """Convert date string to ISO format."""

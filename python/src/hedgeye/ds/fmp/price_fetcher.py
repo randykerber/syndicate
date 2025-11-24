@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import os
 from pathlib import Path
-from hedgeye.yahoo.yahoo_fallback import get_yahoo_price, is_yahoo_fallback_symbol
+from hedgeye.ds.yf.yahoo_fallback import get_yahoo_price, is_yahoo_fallback_symbol
 
 class FMPPriceFetcher:
     """

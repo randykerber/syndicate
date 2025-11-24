@@ -15,7 +15,7 @@ def test_fmp_price_fetcher():
     print("=== Testing FMP Price Fetcher ===")
     
     try:
-        from fmp.price_fetcher import get_latest_price, get_historical_price
+        from hedgeye.ds.fmp.price_fetcher import get_latest_price, get_historical_price
         
         # Test cases with different entity types
         test_cases = [
@@ -62,7 +62,7 @@ def test_mapping_integration():
     print("\n=== Testing Symbol Mapping Integration ===")
     
     try:
-        from fmp.price_fetcher import get_prices_for_symbols
+        from hedgeye.ds.fmp.price_fetcher import get_prices_for_symbols
         
         # Load mappings
         fmp_path = os.path.expanduser("~/d/downloads/fmp/he_to_fmp.csv")
@@ -105,8 +105,8 @@ def test_enhanced_plotting():
     print("\n=== Testing Enhanced Plotting ===")
     
     try:
-        from hedgeye_kb.enhanced_plotting import display_rr_with_latest_price, load_symbol_mappings
-        from hedgeye_kb.use_rr import load_all_risk_range_data
+        from hedgeye.ds.rr.enhanced_rr_plotting import display_rr_with_latest_price, load_symbol_mappings
+        from hedgeye.ds.rr.use_rr import load_all_risk_range_data
         
         # Load data
         print("Loading Hedgeye risk range data...")

@@ -8,8 +8,8 @@ in FMP entity data using pandas DataFrames.
 
 import pandas as pd
 from pathlib import Path
-from hedgeye_kb.config_loader import load_config
-from fmp.load_entities import load_fmp_entities
+from hedgeye.config_loader import load_config
+from hedgeye.ds.fmp.load_entities import load_fmp_entities
 
 def load_hedgeye_data():
     """Load Hedgeye risk range data from CSV"""

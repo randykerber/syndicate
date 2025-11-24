@@ -8,7 +8,7 @@ Cache format: CSV with columns: date, ticker, price
 - Batch fetch all missing prices at once
 
 Usage:
-    from hedgeye.price_cache import get_daily_prices
+    from hedgeye.ds.prices.price_cache import get_daily_prices
     
     # Get prices for multiple tickers over date range
     prices_df = get_daily_prices(['AAAU', 'QQQ'], start_date, end_date)
