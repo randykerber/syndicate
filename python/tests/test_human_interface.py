@@ -7,8 +7,8 @@ import asyncio
 import tempfile
 import json
 from pathlib import Path
-from syndicate.human_interface import HumanQueue, HumanRequest, HumanResponse
-from syndicate.human_interface import ask_human_choice, ask_human_approval, ask_human_text
+from sss.human_interface import HumanQueue, HumanRequest, HumanResponse
+from sss.human_interface import ask_human_choice, ask_human_approval, ask_human_text
 
 
 def test_human_request_creation():

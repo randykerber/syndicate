@@ -6,7 +6,7 @@ import pytest
 import asyncio
 import tempfile
 import os
-from syndicate.agents import SyndicateAgent, WeatherAgent, ContentRouter
+from sss.agents import SyndicateAgent, WeatherAgent, ContentRouter
 
 
 @pytest.mark.asyncio
