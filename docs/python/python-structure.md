@@ -60,13 +60,13 @@ python/                          ← PROJECT ROOT (where pyproject.toml lives)
 ### What Can Be Imported?
 
 **From `src/syndicate/` (the package):**
-- ✅ `from syndicate.data_sources.hedgeye import price_cache`
+- ✅ `from hedgeye import price_cache`
 - ✅ `from syndicate.agents import SyndicateAgent`
 - ✅ `import syndicate`
 
 **From `scripts/`, `servers/`, `demos/` (NOT in package):**
 - ❌ Cannot be imported by package code
-- ✅ Can import from package: `from syndicate.data_sources.hedgeye import ...`
+- ✅ Can import from package: `from hedgeye import ...`
 - ✅ Can be run directly: `python scripts/hedgeye/run_full_rr_pipeline.py`
 
 ### Import Paths
@@ -74,8 +74,8 @@ python/                          ← PROJECT ROOT (where pyproject.toml lives)
 **Package imports** (from anywhere):
 ```python
 # Absolute imports (preferred)
-from syndicate.data_sources.hedgeye import price_cache
-from syndicate.data_sources.hedgeye.price_cache import get_daily_prices
+from hedgeye import price_cache
+from hedgeye.price_cache import get_daily_prices
 
 # Relative imports (within package only)
 from .price_cache import get_daily_prices  # Same package
@@ -85,7 +85,7 @@ from ..config_loader import load_config    # Parent package
 **Script imports** (from scripts/):
 ```python
 # Scripts import from package
-from syndicate.data_sources.hedgeye.rr_pipeline import run_full_rr_pipeline
+from hedgeye.rr_pipeline import run_full_rr_pipeline
 ```
 
 ## Visibility Rules
@@ -115,16 +115,16 @@ cd /Users/rk/gh/randykerber/syndicate/python
 uv run python scripts/hedgeye/run_full_rr_pipeline.py
 
 # Or as module (if script is in package)
-uv run python -m syndicate.data_sources.hedgeye.process_etf_pro_weekly
+uv run python -m hedgeye.process_etf_pro_weekly
 ```
 
 ### Running Package Code:
 ```bash
 # As module (preferred)
-uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
+uv run python -m hedgeye.cr_merge_ranges
 
 # Direct import in Python
-uv run python -c "from syndicate.data_sources.hedgeye import price_cache; ..."
+uv run python -c "from hedgeye import price_cache; ..."
 ```
 
 ## Key Points

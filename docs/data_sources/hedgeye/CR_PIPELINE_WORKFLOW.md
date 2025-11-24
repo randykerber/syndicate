@@ -154,16 +154,16 @@ Translation is necessary because RR data is in r_sym coordinates but we want to 
 uv run python scripts/hedgeye/run_full_rr_pipeline.py
 
 # 2. Process EP (ETF Pro Plus) weekly emails
-uv run python -m syndicate.data_sources.hedgeye.process_etf_pro_weekly
+uv run python -m hedgeye.process_etf_pro_weekly
 
 # 3. Process PS (Portfolio Solutions) daily emails
-uv run python -m syndicate.data_sources.hedgeye.process_portfolio_solutions
+uv run python -m hedgeye.process_portfolio_solutions
 
 # 4. Merge all sources (uses latest EP/PS files)
-uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
+uv run python -m hedgeye.cr_merge_ranges
 
 # 5. Enrich with prices
-uv run python -m syndicate.data_sources.hedgeye.cr_enrich_ranges
+uv run python -m hedgeye.cr_enrich_ranges
 
 # 6. Generate time-series plots
 uv run python scripts/hedgeye/generate_cr_time_series_plots.py

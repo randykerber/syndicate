@@ -170,7 +170,7 @@ Try: "Explain how the Hedgeye data pipeline works from email to enriched CSV"
 
 ```bash
 cd /Users/rk/gh/randykerber/syndicate/python
-uv run python -c "from syndicate.data_sources.hedgeye.pipeline import run_full_pipeline; print('✓ Import works')"
+uv run python -c "from hedgeye.pipeline import run_full_pipeline; print('✓ Import works')"
 ```
 
 ### Test 2: Hedgeye Pipeline
@@ -229,7 +229,7 @@ uv run python scripts/hedgeye/parse_emails.py
 uv run python scripts/hedgeye/run_full_pipeline.py
 
 # Or run modules:
-uv run python -m syndicate.data_sources.hedgeye.pipeline
+uv run python -m hedgeye.pipeline
 ```
 
 ### Using AI Features

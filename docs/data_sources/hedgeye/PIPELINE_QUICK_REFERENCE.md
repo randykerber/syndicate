@@ -18,28 +18,28 @@ uv run python scripts/hedgeye/run_full_rr_pipeline.py
 ### Step 2: Process EP (ETF Pro) Weekly Emails
 Processes weekly ETF Pro Plus portfolio snapshots.
 ```bash
-uv run python -m syndicate.data_sources.hedgeye.process_etf_pro_weekly
+uv run python -m hedgeye.process_etf_pro_weekly
 ```
 **Output**: `prod/etf_pro/csv/etf_pro_weekly_YYYY-MM-DD.csv`
 
 ### Step 3: Process PS (Portfolio Solutions) Daily Emails
 Processes daily Portfolio Solutions rankings.
 ```bash
-uv run python -m syndicate.data_sources.hedgeye.process_portfolio_solutions
+uv run python -m hedgeye.process_portfolio_solutions
 ```
 **Output**: `prod/ps/csv/ps_daily_YYYY-MM-DD.csv`
 
 ### Step 4: Run CR Merge
 Merges EP, PS, and RR data into base snapshot.
 ```bash
-uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
+uv run python -m hedgeye.cr_merge_ranges
 ```
 **Output**: `prod/ranges/base/position_ranges_base.csv`
 
 ### Step 5: Run CR Enrich
 Adds current prices and calculates proxy-translated trade ranges.
 ```bash
-uv run python -m syndicate.data_sources.hedgeye.cr_enrich_ranges
+uv run python -m hedgeye.cr_enrich_ranges
 ```
 **Output**: `prod/ranges/enriched/position_ranges_enriched.csv`
 

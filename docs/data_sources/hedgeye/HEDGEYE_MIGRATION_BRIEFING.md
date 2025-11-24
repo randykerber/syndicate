@@ -174,14 +174,14 @@ from hedgeye_kb.config_loader import load_config
 from hedgeye_kb.symbol_canonicalization import canonicalize_symbol
 
 # NEW imports:
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.symbol_canonicalization import canonicalize_symbol
+from hedgeye.config_loader import load_config
+from hedgeye.symbol_canonicalization import canonicalize_symbol
 ```
 
 **Test After Each Fix**:
 ```bash
 # Example for config_loader
-python -c "from syndicate.data_sources.hedgeye.config_loader import load_config; print(load_config())"
+python -c "from hedgeye.config_loader import load_config; print(load_config())"
 ```
 
 **Commit After Each Module**:
@@ -201,7 +201,7 @@ git commit -m "Fix: Update imports in <module>.py"
 cat > python/test_step1_parse.py << 'EOF'
 #!/usr/bin/env python3
 """Test: Parse a single Risk Range email"""
-from syndicate.data_sources.hedgeye.parse_eml import parse_risk_range_email
+from hedgeye.parse_eml import parse_risk_range_email
 
 email_path = "/Users/rk/d/downloads/hedgeye/raw/eml/risk_range/risk_range_2025-11-12.eml"
 entries, changes = parse_risk_range_email(email_path)
@@ -218,7 +218,7 @@ python python/test_step1_parse.py
 cat > python/test_step2_save.py << 'EOF'
 #!/usr/bin/env python3
 """Test: Save parsed data to CSV"""
-from syndicate.data_sources.hedgeye.parse_eml import parse_risk_range_email
+from hedgeye.parse_eml import parse_risk_range_email
 import pandas as pd
 from pathlib import Path
 
@@ -242,7 +242,7 @@ python python/test_step2_save.py
 cat > python/test_step3_combine.py << 'EOF'
 #!/usr/bin/env python3
 """Test: Load and combine all CSV files"""
-from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data
+from hedgeye.use_rr import load_all_risk_range_data
 
 df = load_all_risk_range_data()
 print(f"✅ Loaded {len(df)} total records")
@@ -258,8 +258,8 @@ python python/test_step3_combine.py
 cat > python/test_step4_plot.py << 'EOF'
 #!/usr/bin/env python3
 """Test: Generate a single plot"""
-from syndicate.data_sources.hedgeye.enhanced_plotting import display_rr_with_latest_price
-from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data
+from hedgeye.enhanced_plotting import display_rr_with_latest_price
+from hedgeye.use_rr import load_all_risk_range_data
 from pathlib import Path
 
 df = load_all_risk_range_data()
@@ -401,7 +401,7 @@ plotting:
 
 ### Import Errors
 **Problem**: `ModuleNotFoundError: No module named 'hedgeye_kb'`
-**Solution**: Change all imports from `hedgeye_kb.*` to `syndicate.data_sources.hedgeye.*`
+**Solution**: Change all imports from `hedgeye_kb.*` to `hedgeye.*`
 
 ### Config Path Issues
 **Problem**: `FileNotFoundError: config.yaml`
@@ -426,8 +426,8 @@ plotting:
 ### Unit Tests (Quick validation)
 ```bash
 # Test each module independently
-python -c "from syndicate.data_sources.hedgeye.config_loader import load_config"
-python -c "from syndicate.data_sources.hedgeye.parse_eml import parse_risk_range_email"
+python -c "from hedgeye.config_loader import load_config"
+python -c "from hedgeye.parse_eml import parse_risk_range_email"
 # etc.
 ```
 
