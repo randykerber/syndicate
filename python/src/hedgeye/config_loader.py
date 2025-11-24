@@ -4,8 +4,36 @@ import yaml
 from dotenv import load_dotenv
 from pathlib import Path
 
+
+def get_python_project_root() -> Path:
+    """
+    Find the Python project root directory by looking for pyproject.toml.
+    
+    The Python project root is where pyproject.toml lives (python/ directory).
+    This is more robust than counting parent directories.
+    
+    Returns:
+        Path to the Python project root directory
+        
+    Raises:
+        FileNotFoundError: If project root cannot be found
+    """
+    current = Path(__file__).resolve()
+    
+    # Look for pyproject.toml going up the directory tree
+    for parent in [current] + list(current.parents):
+        if (parent / "pyproject.toml").exists():
+            return parent
+            
+    raise FileNotFoundError(
+        "Cannot find Python project root (no pyproject.toml found). "
+        f"Searched from: {current}"
+    )
+
+
 # Load secrets from .env (at python/ directory level)
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / '.env')
+_python_root = get_python_project_root()
+load_dotenv(dotenv_path=_python_root / '.env')
 
 # Load project config from config/hedgeye.yaml
 def load_config():
@@ -25,7 +53,8 @@ def load_config():
     
     Will resolve to the substituted paths.
     """
-    config_path = Path(__file__).resolve().parents[4] / "config" / "hedgeye.yaml"
+    python_root = get_python_project_root()
+    config_path = python_root / "config" / "hedgeye.yaml"
     
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
