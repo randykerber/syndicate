@@ -9,8 +9,8 @@ Usage:
     uv run python scripts/hedgeye/clear_today_price_cache.py
 """
 
-from syndicate.data_sources.hedgeye.fetch_prices import clear_today_cache as clear_daily_cache
-from syndicate.data_sources.hedgeye.price_cache import clear_today_cache as clear_historical_cache
+from hedgeye.fetch_prices import clear_today_cache as clear_daily_cache
+from hedgeye.price_cache import clear_today_cache as clear_historical_cache
 
 def main():
     """Clear today's prices from both cache systems."""
