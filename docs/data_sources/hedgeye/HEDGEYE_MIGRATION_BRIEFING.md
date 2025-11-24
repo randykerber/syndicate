@@ -168,6 +168,7 @@ Processes Hedgeye email reports through a pipeline:
 7. Scripts - Depend on all modules
 
 **For Each Module**:
+
 ```python
 # OLD imports:
 from hedgeye_kb.config_loader import load_config
@@ -175,7 +176,7 @@ from hedgeye_kb.symbol_canonicalization import canonicalize_symbol
 
 # NEW imports:
 from hedgeye.config_loader import load_config
-from hedgeye.symbol_canonicalization import canonicalize_symbol
+from hedgeye.ds.rr.symbol_canonicalization import canonicalize_symbol
 ```
 
 **Test After Each Fix**:

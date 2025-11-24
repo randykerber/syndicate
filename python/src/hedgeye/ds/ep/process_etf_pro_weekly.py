@@ -16,9 +16,8 @@ Usage:
 
 import re
 from pathlib import Path
-from typing import List
 from hedgeye.config_loader import load_config
-from hedgeye.parse_etf_pro_weekly import parse_eml, save_outputs, EtfProPosition
+from hedgeye.ds.ep.parse_etf_pro_weekly import parse_eml, save_outputs
 
 
 def is_already_processed(eml_filename: str, csv_dir: Path) -> bool:

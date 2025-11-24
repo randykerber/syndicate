@@ -72,14 +72,15 @@ python/                          ← PROJECT ROOT (where pyproject.toml lives)
 ### Import Paths
 
 **Package imports** (from anywhere):
+
 ```python
 # Absolute imports (preferred)
-from hedgeye import price_cache
+from hedgeye.ds.prices import price_cache
 from hedgeye.price_cache import get_daily_prices
 
 # Relative imports (within package only)
 from .price_cache import get_daily_prices  # Same package
-from ..config_loader import load_config    # Parent package
+from ..config_loader import load_config  # Parent package
 ```
 
 **Script imports** (from scripts/):

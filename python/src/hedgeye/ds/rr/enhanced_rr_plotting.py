@@ -13,7 +13,7 @@ from typing import Optional
 
 from hedgeye.config_loader import load_config
 from hedgeye.ds.rr.use_rr import load_all_risk_range_data
-from hedgeye.symbol_canonicalization import get_canonical_symbol_for_plotting, canonicalize_symbol
+from hedgeye.ds.rr.symbol_canonicalization import get_canonical_symbol_for_plotting, canonicalize_symbol
 from hedgeye.fmp.price_fetcher import get_prices_for_symbols
 
 def load_symbol_mappings() -> pd.DataFrame:

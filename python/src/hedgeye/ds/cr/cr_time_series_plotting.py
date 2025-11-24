@@ -23,7 +23,7 @@ import numpy as np
 from hedgeye.config_loader import load_config
 from hedgeye.ds.rr.use_rr import load_all_risk_range_data
 from hedgeye.price_cache import get_daily_prices
-from hedgeye.cr_merge_ranges import load_mapping_table
+from hedgeye.ds.cr.cr_merge_ranges import load_mapping_table
 
 try:
     import yfinance as yf

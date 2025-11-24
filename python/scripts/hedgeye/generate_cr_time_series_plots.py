@@ -6,7 +6,7 @@ Usage:
     uv run python scripts/hedgeye/generate_cr_time_series_plots.py
 """
 
-from hedgeye.cr_time_series_plotting import generate_all_cr_time_series_plots
+from hedgeye.ds.cr.cr_time_series_plotting import generate_all_cr_time_series_plots
 
 def main():
     """Generate CR time-series plots for all tickers."""

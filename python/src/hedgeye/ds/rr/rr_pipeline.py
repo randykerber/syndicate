@@ -12,7 +12,7 @@ from typing import Optional
 from hedgeye.ds.rr.run_rr_parser import main as run_parser_main
 from hedgeye.ds.rr.use_rr import load_all_risk_range_data, save_combined_risk_range_df, generate_all_plots
 from hedgeye.ds.rr.enhanced_rr_plotting import generate_enhanced_plots
-from hedgeye.symbol_canonicalization import canonicalize_symbol
+from hedgeye.ds.rr.symbol_canonicalization import canonicalize_symbol
 
 
 def run_rr_parsing_step(file_path: Optional[str] = None) -> None:

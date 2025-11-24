@@ -17,12 +17,10 @@ Usage:
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Optional, Union
+from typing import List
 import yfinance as yf
 from hedgeye.config_loader import load_config
-from hedgeye.price_utils import (
-    is_market_closed_et,
-    is_weekend_date,
+from hedgeye.ds.prices.price_utils import (
     should_cache_today,
 )
 
