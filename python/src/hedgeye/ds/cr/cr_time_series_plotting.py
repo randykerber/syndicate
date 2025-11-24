@@ -279,6 +279,47 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
     print(f"Fetching daily prices for {p_sym}...")
     daily_prices = fetch_historical_daily_prices(p_sym, start_date, end_date)
     
+    # Check if today's price is missing and fetch it fresh (never use cache for today)
+    from hedgeye.ds.prices.fetch_prices import fetch_current_prices
+    
+    today = datetime.now().date()
+    today_timestamp = pd.Timestamp(today)
+    if not daily_prices.empty:
+        # Check if today's date is in the index
+        today_in_prices = today_timestamp in daily_prices.index
+    else:
+        today_in_prices = False
+    
+    if not today_in_prices:
+        # Always fetch fresh price for today (markets may be open)
+        try:
+            current_prices = fetch_current_prices([p_sym], use_cache=False)
+            if p_sym in current_prices:
+                today_price = current_prices[p_sym]
+                today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
+                if daily_prices.empty:
+                    daily_prices = today_series
+                else:
+                    daily_prices = pd.concat([daily_prices, today_series])
+                print(f"  ✓ Fetched fresh today's price: ${today_price:.2f}")
+            else:
+                # Fallback to enriched data if fresh fetch failed
+                config = load_config()
+                enriched_path = Path(config['paths']['ranges_base_dir']) / 'enriched' / 'position_ranges_enriched.csv'
+                if enriched_path.exists():
+                    enriched_df = pd.read_csv(enriched_path, dtype=str)
+                    p_row = enriched_df[enriched_df['p_sym'] == p_sym]
+                    if not p_row.empty and p_row.iloc[0].get('p_current'):
+                        today_price = float(p_row.iloc[0]['p_current'])
+                        today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
+                        if daily_prices.empty:
+                            daily_prices = today_series
+                        else:
+                            daily_prices = pd.concat([daily_prices, today_series])
+                        print(f"  ✓ Added today's price from enriched data (fallback): ${today_price:.2f}")
+        except Exception as e:
+            print(f"  ⚠️  Could not fetch today's price: {e}")
+    
     # Create p_current series from daily prices (preferred) or EP weekly prices (fallback)
     if not daily_prices.empty:
         p_current_series = daily_prices
@@ -322,6 +363,28 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
         price_df = daily_prices.reset_index()
         price_df.columns = ['date', 'price']
         price_df['date'] = pd.to_datetime(price_df['date'])
+        
+        # Check if today's price is missing and try to add it
+        today = datetime.now().date()
+        if today not in price_df['date'].dt.date.values:
+            # Try to get today's price from enriched data or fetch fresh
+            try:
+                config = load_config()
+                enriched_path = Path(config['paths']['ranges_base_dir']) / 'enriched' / 'position_ranges_enriched.csv'
+                if enriched_path.exists():
+                    enriched_df = pd.read_csv(enriched_path, dtype=str)
+                    p_row = enriched_df[enriched_df['p_sym'] == p_sym]
+                    if not p_row.empty and p_row.iloc[0].get('p_current'):
+                        today_price = float(p_row.iloc[0]['p_current'])
+                        today_df = pd.DataFrame({
+                            'date': [pd.Timestamp(today)],
+                            'price': [today_price]
+                        })
+                        price_df = pd.concat([price_df, today_df], ignore_index=True)
+                        print(f"  ✓ Added today's price from enriched data: ${today_price:.2f}")
+            except Exception as e:
+                print(f"  ⚠️  Could not add today's price: {e}")
+        
         merged_df = pd.merge(merged_df, price_df, on='date', how='outer', sort=True)
     else:
         # Fallback to EP recent_price if no daily prices
@@ -350,11 +413,11 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
         ax.fill_between(trend_data['date'], 
                        trend_data['trend_low'], 
                        trend_data['trend_high'],
-                       alpha=0.2, color='blue', label='Trend Range (EP)')
+                       alpha=0.2, color='blue', label='Trend Range')
         ax.plot(trend_data['date'], trend_data['trend_low'], 
-               color='blue', linestyle='--', linewidth=1.5, alpha=0.7, label='Trend Low')
+               color='blue', linestyle='--', linewidth=1.5, alpha=0.7, label='')
         ax.plot(trend_data['date'], trend_data['trend_high'], 
-               color='blue', linestyle='--', linewidth=1.5, alpha=0.7, label='Trend High')
+               color='blue', linestyle='--', linewidth=1.5, alpha=0.7, label='')
     
     # Plot trade ranges (from RR, translated) - shaded area
     trade_mask = merged_df['p_trade_low'].notna() & merged_df['p_trade_high'].notna()
@@ -363,11 +426,11 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
         ax.fill_between(trade_data['date'], 
                        trade_data['p_trade_low'], 
                        trade_data['p_trade_high'],
-                       alpha=0.2, color='green', label='Trade Range (RR, translated)')
+                       alpha=0.2, color='green', label='Trade Range')
         ax.plot(trade_data['date'], trade_data['p_trade_low'], 
-               color='green', linestyle='--', linewidth=1.5, alpha=0.7, label='Trade Low')
+               color='green', linestyle='--', linewidth=1.5, alpha=0.7, label='')
         ax.plot(trade_data['date'], trade_data['p_trade_high'], 
-               color='green', linestyle='--', linewidth=1.5, alpha=0.7, label='Trade High')
+               color='green', linestyle='--', linewidth=1.5, alpha=0.7, label='')
     
     # Plot price history
     price_mask = merged_df['price'].notna()
