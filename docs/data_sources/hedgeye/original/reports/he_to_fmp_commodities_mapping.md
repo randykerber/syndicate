@@ -58,4 +58,4 @@ If futures vs spot mismatch is confirmed:
 ## Related Files
 
 - `/Users/rk/d/downloads/fmp/he_to_fmp.csv` - Complete mapping table
-- `src/hedgeye_kb/create_mapping_table.py` - Script to regenerate mappings 
+- `src/hedgeye/ds/fmp/create_mapping_table.py` - Script to regenerate mappings 

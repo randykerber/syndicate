@@ -92,7 +92,7 @@ The case inconsistencies suggest that the email parsing process is extracting sy
 
 ## Next Steps
 
-1. **Fix Data Pipeline**: Implement symbol normalization in `/Users/rk/gh/randykerber/hedgeye-kb/src/hedgeye_kb/parse_eml.py`
+1. **Fix Data Pipeline**: Implement symbol normalization in `/Users/rk/gh/randykerber/syndicate/python/src/hedgeye/ds/rr/parse_eml.py`
 2. **Reprocess Data**: Re-run the parsing pipeline with normalized symbols
 3. **Update Plotting Code**: Ensure plotting logic handles symbol lookups case-insensitively
 4. **Data Validation**: Add validation to detect and flag potential duplicate symbols during processing
