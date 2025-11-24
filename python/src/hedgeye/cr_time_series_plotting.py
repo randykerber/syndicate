@@ -21,8 +21,7 @@ from typing import Optional, Dict, List, Any
 import numpy as np
 
 from hedgeye.config_loader import load_config
-from hedgeye.use_rr import load_all_risk_range_data
-from hedgeye.cr_enrich_ranges import cr_calculate_proxy_trade_ranges
+from hedgeye.ds.rr.use_rr import load_all_risk_range_data
 from hedgeye.price_cache import get_daily_prices
 from hedgeye.cr_merge_ranges import load_mapping_table
 

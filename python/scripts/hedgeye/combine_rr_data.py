@@ -2,7 +2,7 @@
 """
 Combine individual CSV files into a master dataset.
 """
-from hedgeye.rr_pipeline import run_rr_combine_step
+from hedgeye.ds.rr.rr_pipeline import run_rr_combine_step
 
 def main():
     run_rr_combine_step()

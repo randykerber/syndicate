@@ -9,13 +9,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-import os
+from typing import Optional
 
 from hedgeye.config_loader import load_config
-from hedgeye.use_rr import load_all_risk_range_data
+from hedgeye.ds.rr.use_rr import load_all_risk_range_data
 from hedgeye.symbol_canonicalization import get_canonical_symbol_for_plotting, canonicalize_symbol
-from hedgeye.fmp.price_fetcher import FMPPriceFetcher, get_prices_for_symbols
+from hedgeye.fmp.price_fetcher import get_prices_for_symbols
 
 def load_symbol_mappings() -> pd.DataFrame:
     """Load the Hedgeye to FMP symbol mappings."""

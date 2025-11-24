@@ -2,7 +2,7 @@
 """
 Generate time series plots for all Risk Range symbols.
 """
-from hedgeye.rr_pipeline import run_rr_basic_plots_step
+from hedgeye.ds.rr.rr_pipeline import run_rr_basic_plots_step
 
 def main():
     run_rr_basic_plots_step()

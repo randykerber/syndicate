@@ -83,9 +83,10 @@ from ..config_loader import load_config    # Parent package
 ```
 
 **Script imports** (from scripts/):
+
 ```python
 # Scripts import from package
-from hedgeye.rr_pipeline import run_full_rr_pipeline
+from hedgeye.ds.rr.rr_pipeline import run_full_rr_pipeline
 ```
 
 ## Visibility Rules

@@ -1,7 +1,7 @@
 import re
 import sys
 from pathlib import Path
-from hedgeye.parse_rr_eml import parse_eml, save_outputs
+from hedgeye.ds.rr.parse_rr_eml import parse_eml, save_outputs
 from hedgeye.config_loader import load_config
 
 # Load config

@@ -2,7 +2,7 @@
 """
 Run the complete Hedgeye Risk Range data pipeline.
 """
-from hedgeye.rr_pipeline import run_full_rr_pipeline
+from hedgeye.ds.rr.rr_pipeline import run_full_rr_pipeline
 
 def main():
     run_full_rr_pipeline()
