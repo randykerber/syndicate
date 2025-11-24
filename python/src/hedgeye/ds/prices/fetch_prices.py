@@ -19,7 +19,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List
 from hedgeye.config_loader import load_config
-from hedgeye.fmp.price_fetcher import FMPPriceFetcher
+from hedgeye.ds.fmp.price_fetcher import FMPPriceFetcher
 from hedgeye.ds.prices.price_utils import (
     should_cache_today,
 )

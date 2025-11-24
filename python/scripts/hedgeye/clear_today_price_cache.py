@@ -2,15 +2,15 @@
 """
 Clear today's prices from both price caches.
 
-This forces fresh price fetches for the current day, useful when markets are open
+This forces fresh price fetches for the current day, useful when markets are open,
 and you want the latest prices instead of cached values from earlier in the day.
 
 Usage:
     uv run python scripts/hedgeye/clear_today_price_cache.py
 """
 
-from hedgeye.fetch_prices import clear_today_cache as clear_daily_cache
-from hedgeye.price_cache import clear_today_cache as clear_historical_cache
+from hedgeye.ds.prices.fetch_prices import clear_today_cache as clear_daily_cache
+from hedgeye.ds.prices.price_cache import clear_today_cache as clear_historical_cache
 
 def main():
     """Clear today's prices from both cache systems."""
