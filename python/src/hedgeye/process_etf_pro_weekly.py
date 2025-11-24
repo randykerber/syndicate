@@ -11,14 +11,14 @@ This script:
    - Saves the result to CSV in the prod directory
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.process_etf_pro_weekly
+    uv run python -m hedgeye.process_etf_pro_weekly
 """
 
 import re
 from pathlib import Path
 from typing import List
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.parse_etf_pro_weekly import parse_eml, save_outputs, EtfProPosition
+from hedgeye.config_loader import load_config
+from hedgeye.parse_etf_pro_weekly import parse_eml, save_outputs, EtfProPosition
 
 
 def is_already_processed(eml_filename: str, csv_dir: Path) -> bool:

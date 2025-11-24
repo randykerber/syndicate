@@ -18,9 +18,9 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.fmp.price_fetcher import FMPPriceFetcher
-from syndicate.data_sources.hedgeye.price_utils import (
+from hedgeye.config_loader import load_config
+from hedgeye.fmp.price_fetcher import FMPPriceFetcher
+from hedgeye.price_utils import (
     is_market_closed_et,
     is_weekend_date,
     should_cache_today,

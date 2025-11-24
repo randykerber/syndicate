@@ -8,8 +8,8 @@ Reads the latest ETF Pro weekly CSV and adds current_price column.
 import pandas as pd
 from pathlib import Path
 from typing import Dict, Optional
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.fmp.price_fetcher import get_prices_for_symbols
+from hedgeye.config_loader import load_config
+from hedgeye.fmp.price_fetcher import get_prices_for_symbols
 
 
 def get_latest_etf_pro_file() -> Optional[Path]:

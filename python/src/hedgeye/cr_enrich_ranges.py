@@ -12,14 +12,14 @@ This script:
 4. Saves enriched CSV with additional calculated fields
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.cr_enrich_ranges
+    uv run python -m hedgeye.cr_enrich_ranges
 """
 
 import pandas as pd
 from pathlib import Path
 from typing import Dict, List
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.fetch_prices import fetch_current_prices
+from hedgeye.config_loader import load_config
+from hedgeye.fetch_prices import fetch_current_prices
 
 
 def cr_load_base_merged(csv_path: Path) -> pd.DataFrame:

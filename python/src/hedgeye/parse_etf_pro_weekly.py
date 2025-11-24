@@ -152,7 +152,7 @@ def save_outputs(report_date: str, positions: List[EtfProPosition], output_dir: 
         output_dir: Output directory (defaults to config value)
     """
     if output_dir is None:
-        from syndicate.data_sources.hedgeye.config_loader import load_config
+        from hedgeye.config_loader import load_config
         config = load_config()
         output_dir = config["paths"]["etf_pro_csv_dir"]
 
@@ -175,7 +175,7 @@ def save_outputs(report_date: str, positions: List[EtfProPosition], output_dir: 
 
 def main():
     """Main entry point - finds and parses the latest ETF Pro weekly email"""
-    from syndicate.data_sources.hedgeye.config_loader import load_config
+    from hedgeye.config_loader import load_config
 
     config = load_config()
     raw_dir = Path(config["paths"]["etf_pro_raw_eml_dir"])

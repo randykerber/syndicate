@@ -8,7 +8,7 @@ Cache format: CSV with columns: date, ticker, price
 - Batch fetch all missing prices at once
 
 Usage:
-    from syndicate.data_sources.hedgeye.price_cache import get_daily_prices
+    from hedgeye.price_cache import get_daily_prices
     
     # Get prices for multiple tickers over date range
     prices_df = get_daily_prices(['AAAU', 'QQQ'], start_date, end_date)
@@ -19,8 +19,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Optional, Union
 import yfinance as yf
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.price_utils import (
+from hedgeye.config_loader import load_config
+from hedgeye.price_utils import (
     is_market_closed_et,
     is_weekend_date,
     should_cache_today,

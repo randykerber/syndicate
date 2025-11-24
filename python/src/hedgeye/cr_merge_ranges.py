@@ -12,14 +12,14 @@ This script combines:
 Output: Clean merged CSV with all raw data, no calculations.
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.cr_merge_ranges
+    uv run python -m hedgeye.cr_merge_ranges
 """
 
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
-from syndicate.data_sources.hedgeye.config_loader import load_config
+from hedgeye.config_loader import load_config
 
 
 def get_latest_file(directory: Path, pattern: str) -> Optional[Path]:

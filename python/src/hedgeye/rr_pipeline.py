@@ -10,10 +10,10 @@ import pandas as pd
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from syndicate.data_sources.hedgeye.run_rr_parser import main as run_parser_main
-from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data, save_combined_risk_range_df, generate_all_plots
-from syndicate.data_sources.hedgeye.enhanced_rr_plotting import generate_enhanced_plots, create_summary_dashboard
-from syndicate.data_sources.hedgeye.symbol_canonicalization import canonicalize_symbol
+from hedgeye.run_rr_parser import main as run_parser_main
+from hedgeye.use_rr import load_all_risk_range_data, save_combined_risk_range_df, generate_all_plots
+from hedgeye.enhanced_rr_plotting import generate_enhanced_plots, create_summary_dashboard
+from hedgeye.symbol_canonicalization import canonicalize_symbol
 
 
 def run_rr_parsing_step(file_path: Optional[str] = None) -> None:

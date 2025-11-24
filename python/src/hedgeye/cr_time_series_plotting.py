@@ -8,7 +8,7 @@ Combines:
 3. Daily price history (fetched fresh from yfinance/FMP, no caching)
 
 Usage:
-    from syndicate.data_sources.hedgeye.cr_time_series_plotting import plot_cr_time_series
+    from hedgeye.cr_time_series_plotting import plot_cr_time_series
     plot_cr_time_series("AAAU", days_back=30)
 """
 
@@ -20,11 +20,11 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 import numpy as np
 
-from syndicate.data_sources.hedgeye.config_loader import load_config
-from syndicate.data_sources.hedgeye.use_rr import load_all_risk_range_data
-from syndicate.data_sources.hedgeye.cr_enrich_ranges import cr_calculate_proxy_trade_ranges
-from syndicate.data_sources.hedgeye.price_cache import get_daily_prices
-from syndicate.data_sources.hedgeye.cr_merge_ranges import load_mapping_table
+from hedgeye.config_loader import load_config
+from hedgeye.use_rr import load_all_risk_range_data
+from hedgeye.cr_enrich_ranges import cr_calculate_proxy_trade_ranges
+from hedgeye.price_cache import get_daily_prices
+from hedgeye.cr_merge_ranges import load_mapping_table
 
 try:
     import yfinance as yf
@@ -515,7 +515,7 @@ def generate_all_cr_time_series_plots(
     start_date = end_date - timedelta(days=days_back)
     
     print(f"\n💰 Pre-fetching prices for all tickers...")
-    from syndicate.data_sources.hedgeye.price_cache import get_daily_prices
+    from hedgeye.price_cache import get_daily_prices
     all_prices_df = get_daily_prices(all_tickers, start_date, end_date, use_cache=True)
     print(f"   ✓ Pre-fetched prices for {all_prices_df['ticker'].nunique()} tickers")
     

@@ -17,7 +17,7 @@ import requests
 import pandas as pd
 import os
 from pathlib import Path
-from syndicate.data_sources.hedgeye.config_loader import load_config
+from hedgeye.config_loader import load_config
 
 # Load configuration
 config = load_config()

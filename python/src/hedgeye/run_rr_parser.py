@@ -1,8 +1,8 @@
 import re
 import sys
 from pathlib import Path
-from syndicate.data_sources.hedgeye.parse_rr_eml import parse_eml, save_outputs
-from syndicate.data_sources.hedgeye.config_loader import load_config
+from hedgeye.parse_rr_eml import parse_eml, save_outputs
+from hedgeye.config_loader import load_config
 
 # Load config
 config = load_config()

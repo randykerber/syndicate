@@ -12,7 +12,7 @@ This script:
 4. Saves outputs to prod directory
 
 Usage:
-    uv run python -m syndicate.data_sources.hedgeye.process_portfolio_solutions
+    uv run python -m hedgeye.process_portfolio_solutions
 """
 
 import re
@@ -23,7 +23,7 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 import pandas as pd
 
-from syndicate.data_sources.hedgeye.config_loader import load_config
+from hedgeye.config_loader import load_config
 
 
 def parse_eml_file(eml_path: Path) -> tuple[str, str, str]:
