@@ -6,9 +6,87 @@ Core agent patterns for the SiloSlayer Syndicate system.
 
 import asyncio
 import os
+import httpx
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Callable
 from agents import Agent, Runner, SQLiteSession
+from agents.tool import function_tool
+
+
+# Weather Tools (National Weather Service API)
+@function_tool
+async def get_weather_forecast(latitude: float, longitude: float, location_name: str = "") -> str:
+    """Get weather forecast for coordinates from National Weather Service API."""
+    try:
+        # Get grid point
+        points_url = f"https://api.weather.gov/points/{latitude},{longitude}"
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            points_response = await client.get(points_url)
+            points_response.raise_for_status()
+            points_data = points_response.json()
+
+            # Get forecast
+            forecast_url = points_data["properties"]["forecast"]
+            forecast_response = await client.get(forecast_url)
+            forecast_response.raise_for_status()
+            forecast_data = forecast_response.json()
+
+        periods = forecast_data["properties"]["periods"][:4]
+
+        forecasts = []
+        for period in periods:
+            name = period["name"]
+            temp = period["temperature"]
+            temp_unit = period["temperatureUnit"]
+            wind = period.get("windSpeed", "Unknown")
+            detailed = period["detailedForecast"]
+
+            forecast_text = f"📅 {name}: {temp}°{temp_unit}, Wind: {wind}\n   {detailed}"
+            forecasts.append(forecast_text)
+
+        location_text = f" for {location_name}" if location_name else ""
+        return f"Weather forecast{location_text}:\n\n" + "\n\n".join(forecasts)
+
+    except Exception as e:
+        return f"Could not get weather forecast: {str(e)}"
+
+
+@function_tool
+async def get_location_coordinates(location: str) -> str:
+    """Get coordinates for common US locations. Returns JSON string with latitude, longitude, and location_name."""
+    import json
+
+    locations = {
+        "denver": {"lat": 39.7392, "lon": -104.9903, "full_name": "Denver, Colorado"},
+        "springfield, illinois": {"lat": 39.7817, "lon": -89.6501, "full_name": "Springfield, Illinois"},
+        "springfield, massachusetts": {"lat": 42.1015, "lon": -72.5898, "full_name": "Springfield, Massachusetts"},
+        "springfield, missouri": {"lat": 37.2090, "lon": -93.2923, "full_name": "Springfield, Missouri"},
+        "paris, france": {"lat": 48.8566, "lon": 2.3522, "full_name": "Paris, France"},
+        "paris, texas": {"lat": 33.6609, "lon": -95.5555, "full_name": "Paris, Texas"},
+        "colorado springs": {"lat": 38.8339, "lon": -104.8214, "full_name": "Colorado Springs, Colorado"},
+    }
+
+    location_lower = location.lower().strip()
+
+    if location_lower in locations:
+        coords = locations[location_lower]
+        result = {
+            "latitude": coords["lat"],
+            "longitude": coords["lon"],
+            "location_name": coords["full_name"],
+            "success": True
+        }
+        return json.dumps(result)
+
+    return json.dumps({
+        "success": False,
+        "error": f"Location '{location}' not found. Try: Denver, Springfield (IL/MA/MO), Paris (France/Texas), Colorado Springs"
+    })
+
+
+# Weather tools list for WeatherAgent
+_weather_tools = [get_weather_forecast, get_location_coordinates]
 
 
 class   SyndicateAgent:
@@ -18,7 +96,8 @@ class   SyndicateAgent:
                  name: str,
                  instructions: str,
                  session_id: Optional[str] = None,
-                 model: str = "gpt-4o-mini"):
+                 model: str = "gpt-4o-mini",
+                 tools: Optional[List[Callable]] = None):
         """
         Initialize a Syndicate agent with session persistence.
 
@@ -27,10 +106,12 @@ class   SyndicateAgent:
             instructions: System instructions for the agent
             session_id: Unique session identifier (auto-generated if None)
             model: OpenAI model to use
+            tools: Optional list of function tools for the agent
         """
         self.name = name
         self.instructions = instructions
         self.model = model
+        self.tools = tools or []
         self.session_id = session_id or f"{name.lower()}_{int(datetime.now().timestamp())}"
         self.session = None
         self.agent = None
@@ -48,7 +129,8 @@ class   SyndicateAgent:
         self.agent = Agent(
             name=self.name,
             instructions=self.instructions,
-            model=self.model
+            model=self.model,
+            tools=self.tools if self.tools else None
         )
         return self.agent
 
@@ -131,7 +213,9 @@ Current date and time: {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
         super().__init__(
             name="WeatherAgent",
             instructions=instructions,
-            session_id=session_id
+            session_id=session_id,
+            model="gpt-4o",
+            tools=_weather_tools
         )
 
 
