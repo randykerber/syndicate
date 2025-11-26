@@ -55,29 +55,124 @@ def save_cache(cache_df: pd.DataFrame):
     cache_df.to_csv(cache_path, index=False)
 
 
-def fetch_prices_from_yfinance(tickers: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
+def fetch_prices_from_yfinance_batch(tickers: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
     """
-    Fetch daily closing prices from yfinance for multiple tickers.
-    
+    Fetch daily closing prices from yfinance for multiple tickers using batch download.
+
+    Much faster than sequential fetching - uses yfinance's download() with threads.
+
     Args:
         tickers: List of ticker symbols
         start_date: Start date
         end_date: End date
-        
+
     Returns:
         DataFrame with columns: date, ticker, price
     """
     results = []
-    
+
+    try:
+        # Batch download with threading (much faster!)
+        print(f"  ⚡ Batch fetching {len(tickers)} tickers...")
+        data = yf.download(
+            tickers,
+            start=start_date,
+            end=end_date,
+            group_by='ticker',
+            threads=True,
+            progress=False
+        )
+
+        if data.empty:
+            print(f"  ⚠️  No data returned for any tickers")
+            return pd.DataFrame(columns=['date', 'ticker', 'price'])
+
+        # Handle single ticker case (data structure is different)
+        if len(tickers) == 1:
+            ticker = tickers[0]
+            if 'Close' not in data.columns:
+                print(f"  ⚠️  No data for {ticker}")
+                return pd.DataFrame(columns=['date', 'ticker', 'price'])
+
+            for date, row in data.iterrows():
+                if pd.notna(row['Close']):
+                    date_only = pd.to_datetime(date.tz_localize(None).date() if hasattr(date, 'tz_localize') else date.date())
+                    results.append({
+                        'date': date_only,
+                        'ticker': ticker,
+                        'price': float(row['Close'])
+                    })
+            print(f"  ✓ Fetched {len(results)} days for {ticker}")
+        else:
+            # Multiple tickers - data is multi-indexed
+            successful_tickers = []
+            for ticker in tickers:
+                try:
+                    if ticker not in data.columns.get_level_values(0):
+                        continue
+
+                    ticker_data = data[ticker]
+                    if 'Close' not in ticker_data.columns:
+                        continue
+
+                    ticker_close = ticker_data['Close']
+                    valid_data = ticker_close[ticker_close.notna()]
+
+                    if valid_data.empty:
+                        continue
+
+                    for date, price in valid_data.items():
+                        date_only = pd.to_datetime(date.tz_localize(None).date() if hasattr(date, 'tz_localize') else date.date())
+                        results.append({
+                            'date': date_only,
+                            'ticker': ticker,
+                            'price': float(price)
+                        })
+
+                    successful_tickers.append(ticker)
+                except Exception as e:
+                    print(f"  ⚠️  Error processing {ticker}: {e}")
+                    continue
+
+            if successful_tickers:
+                print(f"  ✓ Batch fetched {len(successful_tickers)} tickers successfully")
+
+    except Exception as e:
+        print(f"  ⚠️  Batch fetch error: {e}")
+        print(f"  ⚠️  Falling back to sequential fetch...")
+        return fetch_prices_from_yfinance_sequential(tickers, start_date, end_date)
+
+    if not results:
+        return pd.DataFrame(columns=['date', 'ticker', 'price'])
+
+    return pd.DataFrame(results)
+
+
+def fetch_prices_from_yfinance_sequential(tickers: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    """
+    Fetch daily closing prices from yfinance for multiple tickers (sequential fallback).
+
+    This is the old sequential implementation, kept as a fallback if batch fetch fails.
+
+    Args:
+        tickers: List of ticker symbols
+        start_date: Start date
+        end_date: End date
+
+    Returns:
+        DataFrame with columns: date, ticker, price
+    """
+    results = []
+
     for ticker in tickers:
         try:
             yf_ticker = yf.Ticker(ticker)
             hist = yf_ticker.history(start=start_date, end=end_date)
-            
+
             if hist.empty:
                 print(f"  ⚠️  No data for {ticker}")
                 continue
-            
+
             # Extract closing prices
             for date, row in hist.iterrows():
                 # Convert date to date-only (remove time and timezone)
@@ -90,17 +185,21 @@ def fetch_prices_from_yfinance(tickers: List[str], start_date: datetime, end_dat
                     'ticker': ticker,
                     'price': float(row['Close'])
                 })
-            
+
             print(f"  ✓ Fetched {len(hist)} days for {ticker}")
-            
+
         except Exception as e:
             print(f"  ⚠️  Error fetching {ticker}: {e}")
             continue
-    
+
     if not results:
         return pd.DataFrame(columns=['date', 'ticker', 'price'])
-    
+
     return pd.DataFrame(results)
+
+
+# Alias for backwards compatibility
+fetch_prices_from_yfinance = fetch_prices_from_yfinance_batch
 
 
 def get_daily_prices(tickers: List[str], start_date: datetime, end_date: datetime, 

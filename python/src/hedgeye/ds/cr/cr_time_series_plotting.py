@@ -233,23 +233,26 @@ def load_rr_time_series_with_translation(p_sym: str, mapping_df: pd.DataFrame,
     return result
 
 
-def plot_cr_time_series(p_sym: str, days_back: int = 30, 
+def plot_cr_time_series(p_sym: str, days_back: int = 30,
                        mapping_df: Optional[pd.DataFrame] = None,
-                       save_path: Optional[Path] = None) -> plt.Figure:
+                       save_path: Optional[Path] = None,
+                       pre_fetched_prices: Optional[pd.DataFrame] = None,
+                       pre_fetched_current_prices: Optional[Dict[str, float]] = None) -> plt.Figure:
     """
     Plot combo ranges time series for a single ticker.
-    
+
     Shows:
     - Trend ranges (from EP) over time
     - Trade ranges (from RR, translated) over time
     - Price history
-    
+
     Args:
         p_sym: Portfolio symbol to plot
         days_back: Number of days to look back (default: 100)
         mapping_df: p_sym to r_sym mapping DataFrame (loads if None)
         save_path: Optional path to save figure
-        
+        pre_fetched_prices: Optional DataFrame with pre-fetched prices (from get_daily_prices)
+
     Returns:
         matplotlib Figure object
     """
@@ -274,10 +277,21 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
     # Load RR time series (daily trade ranges)
     print(f"Loading RR trade ranges for {p_sym}...")
     rr_df = load_rr_time_series_with_translation(p_sym, mapping_df, p_current_series=None)
-    
-    # Fetch daily historical prices for the date range (no caching)
-    print(f"Fetching daily prices for {p_sym}...")
-    daily_prices = fetch_historical_daily_prices(p_sym, start_date, end_date)
+
+    # Use pre-fetched prices if available, otherwise fetch
+    if pre_fetched_prices is not None and not pre_fetched_prices.empty:
+        # Extract prices for this ticker from pre-fetched DataFrame
+        ticker_prices = pre_fetched_prices[pre_fetched_prices['ticker'] == p_sym]
+        if not ticker_prices.empty:
+            daily_prices = ticker_prices.set_index('date')['price']
+            print(f"  ✓ Using {len(daily_prices)} pre-fetched prices for {p_sym}")
+        else:
+            print(f"  ⚠️  No pre-fetched prices for {p_sym}, fetching...")
+            daily_prices = fetch_historical_daily_prices(p_sym, start_date, end_date)
+    else:
+        # Fetch daily historical prices for the date range
+        print(f"Fetching daily prices for {p_sym}...")
+        daily_prices = fetch_historical_daily_prices(p_sym, start_date, end_date)
     
     # Check if today's price is missing and fetch it fresh (never use cache for today)
     from hedgeye.ds.prices.fetch_prices import fetch_current_prices
@@ -291,34 +305,42 @@ def plot_cr_time_series(p_sym: str, days_back: int = 30,
         today_in_prices = False
     
     if not today_in_prices:
-        # Always fetch fresh price for today (markets may be open)
-        try:
-            current_prices = fetch_current_prices([p_sym], use_cache=False)
-            if p_sym in current_prices:
-                today_price = current_prices[p_sym]
-                today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
-                if daily_prices.empty:
-                    daily_prices = today_series
-                else:
-                    daily_prices = pd.concat([daily_prices, today_series])
-                print(f"  ✓ Fetched fresh today's price: ${today_price:.2f}")
+        # Use pre-fetched current price if available, otherwise fetch fresh
+        today_price = None
+        if pre_fetched_current_prices and p_sym in pre_fetched_current_prices:
+            today_price = pre_fetched_current_prices[p_sym]
+            print(f"  ✓ Using pre-fetched current price: ${today_price:.2f}")
+        else:
+            # Fallback: fetch fresh price for today (markets may be open)
+            try:
+                current_prices = fetch_current_prices([p_sym], use_cache=False)
+                if p_sym in current_prices:
+                    today_price = current_prices[p_sym]
+                    print(f"  ✓ Fetched fresh today's price: ${today_price:.2f}")
+            except Exception as e:
+                print(f"  ⚠️  Error fetching current price: {e}")
+
+        if today_price:
+            today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
+            if daily_prices.empty:
+                daily_prices = today_series
             else:
-                # Fallback to enriched data if fresh fetch failed
-                config = load_config()
-                enriched_path = Path(config['paths']['ranges_base_dir']) / 'enriched' / 'position_ranges_enriched.csv'
-                if enriched_path.exists():
-                    enriched_df = pd.read_csv(enriched_path, dtype=str)
-                    p_row = enriched_df[enriched_df['p_sym'] == p_sym]
-                    if not p_row.empty and p_row.iloc[0].get('p_current'):
-                        today_price = float(p_row.iloc[0]['p_current'])
-                        today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
-                        if daily_prices.empty:
-                            daily_prices = today_series
-                        else:
-                            daily_prices = pd.concat([daily_prices, today_series])
-                        print(f"  ✓ Added today's price from enriched data (fallback): ${today_price:.2f}")
-        except Exception as e:
-            print(f"  ⚠️  Could not fetch today's price: {e}")
+                daily_prices = pd.concat([daily_prices, today_series])
+        else:
+            # Fallback to enriched data if fetch failed
+            config = load_config()
+            enriched_path = Path(config['paths']['ranges_base_dir']) / 'enriched' / 'position_ranges_enriched.csv'
+            if enriched_path.exists():
+                enriched_df = pd.read_csv(enriched_path, dtype=str)
+                p_row = enriched_df[enriched_df['p_sym'] == p_sym]
+                if not p_row.empty and p_row.iloc[0].get('p_current'):
+                    today_price = float(p_row.iloc[0]['p_current'])
+                    today_series = pd.Series([today_price], index=[pd.Timestamp(today)])
+                    if daily_prices.empty:
+                        daily_prices = today_series
+                    else:
+                        daily_prices = pd.concat([daily_prices, today_series])
+                    print(f"  ✓ Added today's price from enriched data (fallback): ${today_price:.2f}")
     
     # Create p_current series from daily prices (preferred) or EP weekly prices (fallback)
     if not daily_prices.empty:
@@ -576,10 +598,16 @@ def generate_all_cr_time_series_plots(
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days_back)
     
-    print(f"\n💰 Pre-fetching prices for all tickers...")
+    print(f"\n💰 Pre-fetching historical prices for all tickers...")
     from hedgeye.ds.prices.price_cache import get_daily_prices
     all_prices_df = get_daily_prices(all_tickers, start_date, end_date, use_cache=True)
-    print(f"   ✓ Pre-fetched prices for {all_prices_df['ticker'].nunique()} tickers")
+    print(f"   ✓ Pre-fetched historical prices for {all_prices_df['ticker'].nunique()} tickers")
+
+    # Pre-fetch all current prices (today) in a single batch
+    print(f"\n💰 Pre-fetching current prices for all tickers...")
+    from hedgeye.ds.prices.fetch_prices import fetch_current_prices
+    all_current_prices = fetch_current_prices(all_tickers, use_cache=False)
+    print(f"   ✓ Pre-fetched current prices for {len(all_current_prices)} tickers")
     
     # Statistics tracking
     stats = {
@@ -614,10 +642,12 @@ def generate_all_cr_time_series_plots(
             # Generate plot
             save_path = output_dir / f"cr_timeseries_{ticker}.png"
             fig = plot_cr_time_series(
-                ticker, 
-                days_back=days_back, 
+                ticker,
+                days_back=days_back,
                 mapping_df=mapping_df,
-                save_path=save_path
+                save_path=save_path,
+                pre_fetched_prices=all_prices_df,  # Use pre-fetched historical prices
+                pre_fetched_current_prices=all_current_prices  # Use pre-fetched current prices
             )
             
             plt.close(fig)
