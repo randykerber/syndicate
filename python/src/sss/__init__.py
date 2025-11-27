@@ -10,17 +10,19 @@ Core Components:
 
 __version__ = "0.1.0"
 
-from .agents import SyndicateAgent
-from .human_interface import HumanQueue, ask_human_choice, ask_human_approval, ask_human_text
-from .sessions import create_session, SessionManager
+from .agents import (
+    SSSAgent,
+    PersonalProductivityAgent,
+    ContentRouterAgent,
+)
+
+# Legacy imports (may be deprecated)
+# from .human_interface import HumanQueue, ask_human_choice, ask_human_approval, ask_human_text
+# from .sessions import create_session, SessionManager
 
 __all__ = [
-    "SyndicateAgent",
-    "HumanQueue", 
-    "ask_human_choice",
-    "ask_human_approval", 
-    "ask_human_text",
-    "create_session",
-    "SessionManager",
+    "SSSAgent",
+    "PersonalProductivityAgent",
+    "ContentRouterAgent",
 ]
 
