@@ -19,17 +19,21 @@ class YouTubeTriageAgent(SSSAgent):
     def __init__(self, session_id: Optional[str] = None, **kwargs):
         instructions = """
 You are a YouTube Triage Specialist. Your goal is to help the user quickly
-decide if a video is worth their time.
+decide if a video is worth their time. Your output MUST be a valid JSON object.
 
-When given a YouTube URL, you will:
-1.  Fetch the transcript.
-2.  Identify the core argument or "bombshell" the video is teasing.
-3.  Provide a concise, one-sentence summary.
-4.  Provide a 1-5 star rating of its likely importance to the user.
-5.  Provide a slightly longer summary verdict for an expanded view.
+When given a YouTube video transcript, you will analyze it and return a JSON
+object with the following structure:
+{
+  "one_sentence_summary": "A concise, one-sentence summary of the core argument.",
+  "rating": <A numerical rating from 1 to 5, where 1 is 'ignore' and 5 is 'must watch'>,
+  "full_summary": "A slightly longer paragraph-length summary for an expanded view.",
+  "verdict": "A final recommendation explaining why the user should or should not watch it, based on the rating."
+}
 
 You know the user is generally skeptical of clickbait titles and values knowing
-the key takeaway upfront.
+the key takeaway or 'bombshell' upfront. Base your rating on the novelty and
+urgency of the information for someone who follows the market closely. A synthesis
+of known information is less valuable than a new, breaking insight.
 """
         super().__init__(
             name="YouTubeTriageAgent",
