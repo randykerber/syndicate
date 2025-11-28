@@ -1,0 +1,21 @@
+# Configuration for the Silo-Slayer Syndicate (SSS) package.
+
+# Defines the root paths for the data warehouse, following the Medallion architecture.
+# This allows the application code to be portable and independent of the local
+# machine's file structure.
+
+paths:
+  # Bronze Layer: Raw, immutable source data
+  downloads_root: /Users/rk/d/downloads
+
+  # Silver Layer: Cleaned, structured, and processed data products
+  prod_root: /Users/rk/d/prod
+
+  # Gold Layer: Aggregated, curated views for final consumption
+  view_root: /Users/rk/d/view
+
+# Specific paths for the YouTube data pipeline
+youtube:
+  transcripts_dir: ${paths.downloads_root}/youtube/transcripts
+  triage_summaries_dir: ${paths.prod_root}/youtube/triage_summaries
+  extractions_dir: ${paths.view_root}/youtube/extractions
