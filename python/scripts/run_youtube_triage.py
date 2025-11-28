@@ -20,7 +20,7 @@ from shared.config import load_config
 def main():
     """Main function to run the triage agent."""
     if len(sys.argv) < 2:
-        print("Usage: python scripts/run_youtube_triage.py <youtube_video_id>", file=sys.stderr)
+        print("Usage: uv run python scripts/run_youtube_triage.py <youtube_video_id>", file=sys.stderr)
         sys.exit(1)
 
     video_id = sys.argv[1]
