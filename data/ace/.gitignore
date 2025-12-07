@@ -1,0 +1,9 @@
+# ACE temporary build directories
+# Any directory named 'staging' anywhere under data/ace/
+staging/
+
+# Outbox (built artifacts before deployment)
+outbox/
+
+# Backup files
+*.bak
