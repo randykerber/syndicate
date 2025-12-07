@@ -17,7 +17,7 @@ cd /Users/rk/gh/randykerber/syndicate/python
 
 **Command:**
 ```bash
-uv run python scripts/hedgeye/rr/run_full_rr_pipeline.py
+uv run python scripts/hedgeye/run_rr_pipeline.py
 ```
 
 **What it does:**

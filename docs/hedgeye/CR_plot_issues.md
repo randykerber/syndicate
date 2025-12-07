@@ -61,4 +61,9 @@ PINK -- now RR, proxy = XLV
 
 AAAU/Gold - where's today's RR ?
 
+CPER and Copper seem inconsistent.
+
+CAD/USD and FXC in RR?
+
+show proxy in chart
 
