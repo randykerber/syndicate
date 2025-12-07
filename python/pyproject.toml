@@ -54,6 +54,7 @@ Documentation = "https://github.com/randykerber/syndicate/docs"
 [tool.hatch.build.targets.wheel]
 packages = [
     "src/sss",
+    "src/ace",
     "src/hedgeye"
 ]
 
