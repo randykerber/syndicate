@@ -15,8 +15,8 @@ class ClaudeBuilder(ContextBuilder):
     Build and deploy CLAUDE.md for Claude Code.
 
     Input parts (v0.1):
-    - data/ace/agent/common/COMMON.md
-    - data/ace/agent/claude/CLAUDE-specific.md
+    - data/ace/warehouse/common/COMMON.md
+    - data/ace/warehouse/agents/claude/CLAUDE-specific.md
 
     Output:
     - ~/gh/randykerber/env/dot/config/claude/CLAUDE.md
@@ -36,7 +36,7 @@ class ClaudeBuilder(ContextBuilder):
         inputs = []
 
         # Part 1: Common context (shared across all agents)
-        common_path = self.data_dir / "agent" / "common" / "COMMON.md"
+        common_path = self.data_dir / "warehouse" / "common" / "COMMON.md"
         if common_path.exists():
             inputs.append(common_path)
             print(f"   ✓ Found: {common_path.name}")
@@ -44,7 +44,7 @@ class ClaudeBuilder(ContextBuilder):
             print(f"   ⚠️  Missing: {common_path}")
 
         # Part 2: Claude-specific context
-        claude_specific = self.data_dir / "agent" / "claude" / "CLAUDE-specific.md"
+        claude_specific = self.data_dir / "warehouse" / "agents" / "claude" / "CLAUDE-specific.md"
         if claude_specific.exists():
             inputs.append(claude_specific)
             print(f"   ✓ Found: {claude_specific.name}")
