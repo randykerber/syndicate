@@ -45,11 +45,26 @@ class ContextBuilder(ABC):
         self.data_dir = data_dir
         self.env_dir = env_dir
         self.staging_dir = data_dir / "staging"
-        self.outbox_dir = data_dir / "outbox"
+        self._outbox_base = data_dir / "outbox"
+        self._ship_base = data_dir / "ship"
 
         # Subclasses define these
         self.agent_name = None  # e.g., "claude", "gemini"
         self.output_filename = None  # e.g., "CLAUDE.md"
+
+    @property
+    def outbox_dir(self) -> Path:
+        """Agent-specific outbox directory (computed from agent_name)."""
+        if self.agent_name is None:
+            raise ValueError("agent_name must be set before accessing outbox_dir")
+        return self._outbox_base / self.agent_name
+
+    @property
+    def ship_dir(self) -> Path:
+        """Agent-specific ship directory (computed from agent_name)."""
+        if self.agent_name is None:
+            raise ValueError("agent_name must be set before accessing ship_dir")
+        return self._ship_base / self.agent_name
 
     def ensure_fresh_staging_area(self) -> Path:
         """
@@ -68,15 +83,114 @@ class ContextBuilder(ABC):
         print(f"📂 Created staging area: {agent_staging}")
         return agent_staging
 
-    @abstractmethod
+    def get_common_from_warehouse(self) -> Path:
+        """
+        Get curated COMMON.md from warehouse.
+
+        Default implementation - no staging copy needed.
+
+        Returns:
+            Path to warehouse/common/COMMON.md
+        """
+        path = self.data_dir / "warehouse" / "common" / "COMMON.md"
+        if not path.exists():
+            raise FileNotFoundError(f"Missing: {path}")
+        print(f"   ✓ Using: {path.name} from warehouse/common")
+        return path
+
+    def get_agent_specific_from_warehouse(self) -> Path:
+        """
+        Get agent-specific content from warehouse.
+
+        Default implementation - no staging copy needed.
+        Looks for warehouse/agents/{agent_name}/{AGENT}-specific.md
+
+        Returns:
+            Path to agent-specific file in warehouse
+        """
+        # Construct filename like "CLAUDE-specific.md", "GEMINI-specific.md"
+        filename = f"{self.agent_name.upper()}-specific.md"
+        path = self.data_dir / "warehouse" / "agents" / self.agent_name / filename
+        if not path.exists():
+            raise FileNotFoundError(f"Missing: {path}")
+        print(f"   ✓ Using: {filename} from warehouse/agents/{self.agent_name}")
+        return path
+
+    def get_common(self) -> Path:
+        """
+        Get common context content (shared across agents).
+
+        Default: get from warehouse. Subclasses can override for custom sources.
+
+        Returns:
+            Path to common content file
+        """
+        return self.get_common_from_warehouse()
+
+    def get_agent_specific(self) -> Path:
+        """
+        Get agent-specific context content.
+
+        Default: get from warehouse. Subclasses can override for custom sources.
+
+        Returns:
+            Path to agent-specific content file
+        """
+        return self.get_agent_specific_from_warehouse()
+
+    @property
+    def include_coding(self) -> bool:
+        """Whether to include coding-specific context."""
+        return True  # All current agents are coding-oriented
+
+    @property
+    def include_personal(self) -> bool:
+        """Whether to include personal context (interests, recreation, etc.)"""
+        return False  # Only ChatGPT and Gemini include personal
+
+    def get_personal_files(self) -> List[Path]:
+        """Get personal context files. Returns empty list if not included."""
+        if not self.include_personal:
+            return []
+
+        path = self.data_dir / "warehouse" / "common" / "PERSONAL.md"
+        if not path.exists():
+            raise FileNotFoundError(f"Missing: {path}")
+        print(f"   ✓ Using: PERSONAL.md from warehouse/common")
+        return [path]
+
+    def get_coding_files(self) -> List[Path]:
+        """Get coding-specific files. Returns empty list if not included."""
+        if not self.include_coding:
+            return []
+
+        # Future: could return coding-specific supplemental files
+        # For now, coding context is in COMMON.md
+        return []
+
     def gather_inputs(self) -> List[Path]:
         """
         Collect source parts needed for this agent.
 
+        Assembles from:
+        - Common context (always)
+        - Agent-specific context (always)
+        - Personal files (if include_personal=True)
+        - Coding files (if include_coding=True)
+
         Returns:
             List of Path objects to source files
         """
-        pass
+        inputs = [
+            self.get_common(),
+            self.get_agent_specific(),
+        ]
+
+        # Add optional components
+        inputs.extend(self.get_personal_files())
+        inputs.extend(self.get_coding_files())
+
+        return inputs
 
     def build(self, staging: Path, inputs: List[Path]) -> Path:
         """
@@ -113,10 +227,12 @@ class ContextBuilder(ABC):
         """
         Deploy built artifact to destination.
 
+        TEMPORARY: Currently deploys to local ship/ directory for testing.
+        Later will deploy to env/dot/config/{agent}/ with backup.
+
         Steps:
         1. Copy to outbox (for inspection)
-        2. Backup existing destination file
-        3. Copy to final destination
+        2. Copy to ship (temporary local deployment)
 
         Args:
             artifact: Path to built artifact in staging
@@ -130,22 +246,13 @@ class ContextBuilder(ABC):
         shutil.copy2(artifact, outbox_path)
         print(f"📦 Copied to outbox: {outbox_path}")
 
-        # Step 2: Create backup of destination
-        dest_dir = self.env_dir / self.agent_name
-        dest_path = dest_dir / self.output_filename
+        # Step 2: Copy to ship (TEMPORARY - for testing)
+        ship_path = self.ship_dir / self.output_filename
+        ship_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(artifact, ship_path)
+        print(f"🚢 Shipped to: {ship_path}")
 
-        if dest_path.exists():
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = dest_dir / f"{self.output_filename}.{timestamp}.bak"
-            shutil.copy2(dest_path, backup_path)
-            print(f"💾 Backup created: {backup_path}")
-
-        # Step 3: Deploy to destination
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(artifact, dest_path)
-        print(f"🚀 Deployed: {dest_path}")
-
-        return dest_path
+        return ship_path
 
     def report_failure(self, error: Exception):
         """
