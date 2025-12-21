@@ -9,7 +9,7 @@
 - **IntelliJ IDEA**: Ultimate Individual license ($119/year, longtime customer discount)
 
 ### AI Assistants
-- **Claude**: Pro ($20/mo)
+- **Claude**: Max ($100/mo)
 - **ChatGPT**: Plus ($20/mo) - [tier name may vary, confirm if needed]
 - **Gemini**: [subscription status TBD]
 - **Perplexity**: [subscription status TBD]
