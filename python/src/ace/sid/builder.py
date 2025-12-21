@@ -148,6 +148,11 @@ class ContextBuilder(ABC):
         """Whether to include personal context (interests, recreation, etc.)"""
         return False  # Only ChatGPT and Gemini include personal
 
+    @property
+    def include_info(self) -> bool:
+        """Whether to include info files (subscriptions, etc.)"""
+        return True  # Most agents benefit from factual info
+
     def get_personal_files(self) -> List[Path]:
         """Get personal context files. Returns empty list if not included."""
         if not self.include_personal:
@@ -168,6 +173,21 @@ class ContextBuilder(ABC):
         # For now, coding context is in COMMON.md
         return []
 
+    def get_info_files(self) -> List[Path]:
+        """Get supplementary info files from warehouse/common/info/."""
+        if not self.include_info:
+            return []
+
+        info_dir = self.data_dir / "warehouse" / "common" / "info"
+        if not info_dir.exists():
+            return []
+
+        # Recursively find all .md files in info/ directory
+        info_files = sorted(info_dir.rglob("*.md"))
+        for path in info_files:
+            print(f"   ✓ Using: {path.relative_to(self.data_dir / 'warehouse' / 'common')}")
+        return info_files
+
     def gather_inputs(self) -> List[Path]:
         """
         Collect source parts needed for this agent.
@@ -177,6 +197,7 @@ class ContextBuilder(ABC):
         - Agent-specific context (always)
         - Personal files (if include_personal=True)
         - Coding files (if include_coding=True)
+        - Info files (if include_info=True)
 
         Returns:
             List of Path objects to source files
@@ -189,6 +210,7 @@ class ContextBuilder(ABC):
         # Add optional components
         inputs.extend(self.get_personal_files())
         inputs.extend(self.get_coding_files())
+        inputs.extend(self.get_info_files())
 
         return inputs
 

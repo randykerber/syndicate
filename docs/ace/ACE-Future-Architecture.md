@@ -247,6 +247,30 @@ This is clearer than lumping everything into "Declarative Memory = Preferences."
 
 ---
 
+## Near-Term Improvements (TODO)
+
+1. **Verification test injection** (2025-12-21)
+   - Builder should inject test markers at top of generated files
+   - Example: `TEST_VERIFICATION_CODE: ABC123`, `TEST_LOAD_DATE: 2025-12-21`
+   - Purpose: Verify file loaded correctly, catch stale cached versions
+   - Where: Add to builder.py build() method
+
+2. **Build timestamp injection**
+   - Add `<!-- Built: YYYY-MM-DD HH:MM -->` header to generated files
+   - Helps identify when file was last regenerated
+   - Complements component "Last Updated" dates
+
+3. **Source comments for round-trip maintenance**
+   - Add `<!-- Source: warehouse/path/to/file.md -->` between sections
+   - Makes it easier to trace content back to source files
+   - Helps when manually editing deployed files or debugging
+
+4. **Update component "Last Updated" dates**
+   - COMMON.md still shows 2025-12-12 (should auto-update on warehouse changes)
+   - Consider auto-updating dates when files modified, or remove them entirely
+
+---
+
 ## Open Questions (For Future)
 
 1. **AGENTS.md adoption**: When will Claude/Anthropic officially support it?
@@ -266,6 +290,8 @@ This is clearer than lumping everything into "Declarative Memory = Preferences."
 
 ---
 
-**Next Action**: Implement minimal viable (subscriptions.md in builder), then pivot to Drafts productivity wins.
+**Status**: ✅ Minimal viable complete (subscriptions.md in builder, CLAUDE.md rebuilt and deployed)
+
+**Next Action**: Pivot to Drafts productivity wins.
 
 **Last Updated**: 2025-12-21
