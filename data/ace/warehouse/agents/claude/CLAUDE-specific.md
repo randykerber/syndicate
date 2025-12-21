@@ -25,6 +25,16 @@ This file contains context specific to Claude Code (terminal-based AI coding ass
 - Prefer project-local configurations
 - Create backups before destructive operations
 
+### Claude Desktop Extensions (MCP Servers)
+
+Installed extensions available in Claude Desktop:
+1. **Filesystem** - File access and manipulation
+2. **Control your Mac** - AppleScript automation
+3. **Things** - Task management integration
+4. **Context7** - Up-to-date library documentation
+5. **Postman** - API testing
+6. **Apple Notes** - Quick notes access
+
 ---
 
 ## Active Projects
