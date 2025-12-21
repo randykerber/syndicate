@@ -5,3 +5,11 @@
 # Keep directory structure visible
 !*/
 !*/.gitkeep
+
+# EXCEPTION: Keep ACE warehouse and custom content
+# These are curated/authored content that should be version controlled
+!ace/
+!ace/custom/
+!ace/custom/**
+!ace/warehouse/
+!ace/warehouse/**

@@ -99,3 +99,7 @@ temp/
 docs/context7/raw
 docs/wip
 *.iml
+
+# Scratch/Exploratory code (disposable)
+python/scratch/
+js/scratch/
