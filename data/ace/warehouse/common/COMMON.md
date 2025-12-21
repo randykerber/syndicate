@@ -201,6 +201,75 @@ Under no circumstances should any response be fabricated, simplified, or stated 
 
 ---
 
+## Code Organization Practices
+
+### Scratch vs Scripts Directories
+
+**NEVER create exploratory/test code in `scripts/` directories.**
+
+All AI agents must use **language-specific, topic-based scratch subdirectories** for exploration and testing:
+
+**Structure**:
+```
+python/scratch/<topic-name>/    # Exploratory Python code (gitignored)
+js/scratch/<topic-name>/         # Exploratory JavaScript code (gitignored)
+```
+
+**Workflow**:
+1. **New exploration** → Create `scratch/<topic-name>/` subdirectory
+   - Topic name should be self-documenting (e.g., `drafts-integration`, `api-testing`, `oauth-flow`)
+   - **REQUIRED**: Create `README.md` in the subdirectory with:
+     - Creation date+time: `YYYY-MM-DD HH:MM`
+     - Brief explanation: Why created, what exploring
+     - Cross-references: Note related scratch dirs in other languages if applicable
+2. **Test/debug/experiment** → Work within that isolated topic directory
+3. **Outcome**:
+   - **Success**: Move working code to `scripts/` directory, delete scratch topic
+   - **Abandoned**: Delete entire topic directory
+   - **In-progress**: Leave topic directory, name + README preserve context
+
+**Rules**:
+- Each exploration gets its own subdirectory (never dump into existing scratch)
+- Use **same topic name** across languages (e.g., both `python/scratch/drafts-integration/` and `js/scratch/drafts-integration/`)
+  - Or append `-1`, `-2` if needed for disambiguation
+- Every scratch subdirectory must have README.md documenting when/why created
+- Topic directories are independent (promote, delete, or leave each separately)
+- All `*/scratch/` directories are gitignored
+- Never mix exploratory code with production scripts
+
+**Why**:
+- Prevents "archaeology problem" where forgotten exploratory files get mixed with production scripts
+- Language-specific keeps imports/tooling working (uv, npm work naturally)
+- Same topic name across languages makes cross-language explorations obvious
+- README provides context for future cleanup decisions
+
+**Example**:
+```bash
+# Start new exploration
+mkdir js/scratch/drafts-integration
+cat > js/scratch/drafts-integration/README.md <<EOF
+# Drafts Integration Exploration
+
+**Created:** 2025-12-21 14:30
+
+Exploring Drafts JavaScript API for bulk export. URL schemes can trigger
+Drafts but can't retrieve data back to terminal.
+
+**Related:** If JS approach fails, see python/scratch/drafts-integration/
+EOF
+
+# Create test files...
+
+# Success: promote to production
+mv js/scratch/drafts-integration/working-version.js js/scripts/
+rm -rf js/scratch/drafts-integration
+
+# Abandoned: just delete
+rm -rf js/scratch/drafts-integration
+```
+
+---
+
 ## Critical Safety Rules
 
 ### Scope Awareness (High-Impact Changes Only)
