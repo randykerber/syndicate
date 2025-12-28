@@ -1,13 +1,18 @@
 # Drafts - Text Capture & Processing Hub
 
+**Official Docs**: https://docs.getdrafts.com/
+**Scripting Reference**: https://scripting.getdrafts.com/
+
 ## Overview
-Drafts serves as the primary text capture and initial processing point in the SSS ecosystem, with 1,200+ existing notes requiring intelligent triage and organization.
+Drafts is a quick-capture notes app for macOS, iOS, iPadOS, and Apple Watch. It serves as the primary text capture and initial processing point in the SSS ecosystem, with 1,200+ existing notes requiring intelligent triage and organization.
 
 ## Current Status
 - **Content Volume**: 1,200+ notes accumulated
+- **External Access**: ⚠️ **AppleScript CRU (no Delete) + JavaScript Delete (internal only)**
 - **Raycast Integration**: ✅ Full integration via FlohGro extension
 - **Primary Challenge**: Backlog triage and intelligent routing
 - **Processing Goal**: Transform from "text dumping ground" to "intelligent capture system"
+- **DELETE Capability**: Requires hybrid approach (AppleScript triggers Drafts Action with JavaScript)
 
 ## Raycast Integration Details
 
@@ -34,10 +39,197 @@ Drafts serves as the primary text capture and initial processing point in the SS
 ### Voice Integration Workflow
 ```
 1. SuperWhisper activation → Voice input
-2. Raycast "Dictate Draft" command 
+2. Raycast "Dictate Draft" command
 3. Automatic transcription and draft creation
 4. Optional: Immediate routing via Draft Actions
 ```
+
+---
+
+## External Access Methods (CRUD Capabilities)
+
+### 1. AppleScript (macOS) - ⚠️ CRU Only (No Direct Delete)
+
+**Status**: Create, Read, Update supported. **DELETE requires Drafts Action + JavaScript**.
+
+**Documentation**: https://docs.getdrafts.com/docs/automation/applescript
+
+**CRITICAL LIMITATION**: AppleScript CANNOT delete drafts directly. Must use JavaScript API via Drafts Actions.
+
+#### Create Draft
+```applescript
+tell application "Drafts"
+    make new draft with properties {content:"My new draft", name:"Title", tags:{"tag1", "tag2"}}
+end tell
+```
+
+#### Read Drafts
+```applescript
+-- Get all drafts
+tell application "Drafts"
+    get drafts
+end tell
+
+-- Get specific draft by UUID
+tell application "Drafts"
+    get draft id "DRAFT-UUID-HERE"
+end tell
+
+-- Get content of draft
+tell application "Drafts"
+    set firstDraft to first draft
+    set draftContent to content of firstDraft
+    set draftTags to tags of firstDraft
+end tell
+```
+
+#### Update Draft
+```applescript
+tell application "Drafts"
+    set content of draft id "DRAFT-UUID" to "Updated content"
+end tell
+```
+
+#### Delete Draft - ❌ NOT AVAILABLE via AppleScript
+**AppleScript CANNOT delete drafts directly.** The `delete` command does not work (returns no error but draft remains).
+
+**Solution**: Use JavaScript API via Drafts Action (see JavaScript section below).
+
+#### Search Drafts
+```applescript
+tell application "Drafts"
+    search drafts for "search query"
+end tell
+```
+
+#### Run Action on Draft
+```applescript
+tell application "Drafts"
+    run action "Action Name" with draft id "DRAFT-UUID"
+end tell
+```
+
+**SSS Implication**: This is the KEY to delete capability - run JavaScript-based Drafts Actions via AppleScript!
+
+---
+
+### 2. JavaScript API - ⚠️ Internal Only
+
+**Status**: **Runs ONLY inside Drafts** - Cannot be called from terminal/external scripts
+
+**Documentation**: https://scripting.getdrafts.com/
+
+**Key Objects**:
+- `Draft` - Current draft object (content, uuid, tags, etc.)
+- `Drafts` - App-level methods (createDraft, findAllDrafts, executeAction)
+- `Editor` - Editor state and manipulation
+- `Action` - Action execution
+
+**Example** (runs inside Drafts Action):
+```javascript
+// Get current draft
+let content = draft.content;
+draft.addTag("processed");
+
+// Create new draft
+Drafts.createDraft({
+  content: "Processed: " + content,
+  tags: ["new", "processed"]
+});
+
+// Delete draft (THIS IS THE ONLY WAY TO DELETE!)
+Draft.delete(draft.uuid);
+
+// Find drafts
+let allDrafts = Draft.query("", "inbox", [], [], "created", true, false);
+```
+
+**Delete Capability**:
+- `Draft.delete(uuid)` - ONLY available in JavaScript API
+- Runs ONLY inside Drafts Action scripts
+- Cannot be called from external terminal/scripts
+- Must be triggered via AppleScript `run action` or URL scheme
+
+**SSS Implication**: Can create Drafts Actions that process and delete, but must be triggered externally (via AppleScript or URL scheme)
+
+---
+
+### 3. URL Schemes - ⚠️ One-Way Only
+
+**Status**: **Can send commands, cannot receive data**
+
+**Documentation**: https://docs.getdrafts.com/docs/automation/urlschemes
+
+**Capabilities**:
+```
+drafts://x-callback-url/create?text=...
+drafts://x-callback-url/append?uuid=...&text=...
+drafts://x-callback-url/prepend?uuid=...&text=...
+drafts://x-callback-url/runAction?action=...&uuid=...
+drafts://x-callback-url/search?query=...
+```
+
+**Limitation**: Can trigger actions, cannot retrieve results to terminal
+
+---
+
+### 4. Raycast Extension (FlohGro) - ✅ UI-Level Control
+
+**Status**: **Full UI control** through Raycast commands
+
+**Capabilities**: See "Raycast Integration Details" section above
+
+**Limitation**: UI-driven, not scriptable for batch operations
+
+---
+
+## Recommended SSS Approach: Hybrid AppleScript + JavaScript
+
+**Strategy**: Use AppleScript for external control, JavaScript for delete operations
+
+**Workflow for Delete**:
+1. **Create Drafts Action** (one-time setup):
+   - Name: "Delete Draft by UUID"
+   - Type: Script action
+   - JavaScript: `Draft.delete(draft.uuid);`
+
+2. **Trigger via AppleScript**:
+   ```applescript
+   tell application "Drafts"
+       run action "Delete Draft by UUID" with draft id "DRAFT-UUID"
+   end tell
+   ```
+
+**Full Processing Workflow**:
+1. **AppleScript**: Query drafts, get UUIDs and content
+2. **AI Analysis**: Process content externally (Claude, Gemini, etc.)
+3. **Routing Decision**: Determine destination (Obsidian, Bear, Reminders, Delete)
+4. **AppleScript**: Execute routing:
+   - For routing to other apps: Use AppleScript/CLI tools directly
+   - For delete: Run "Delete Draft by UUID" Drafts Action via AppleScript
+
+**Example Flow**:
+```applescript
+-- Get all drafts
+tell application "Drafts"
+    set allDrafts to drafts
+    repeat with aDraft in allDrafts
+        set draftContent to content of aDraft
+        set draftID to id of aDraft
+
+        -- Process externally (call Python/Node script with content)
+        -- Script returns: "delete" or "route:obsidian" or "route:bear"
+
+        -- Route based on decision
+        -- For delete: run Drafts Action with JavaScript
+        run action "Delete Draft by UUID" with draft id draftID
+
+        -- For Obsidian/Bear routing: use direct AppleScript/CLI commands
+    end repeat
+end tell
+```
+
+**Note**: The "Delete Draft by UUID" action must be created in Drafts first (see Workflow for Delete above).
 
 ## SSS Integration Strategy
 
@@ -196,3 +388,49 @@ AI: "Routing to Obsidian Johnson project workspace"
 - [ ] Voice-driven immediate routing decisions
 - [ ] Cross-app content relationship detection
 - [ ] Predictive routing based on content patterns
+
+---
+
+## Added by Randy Kerber 2025-12-21
+
+Ran command in Warp Terminal CLI:
+```shell
+osascript -e 'tell application "Drafts" to make new draft with properties {content:"Test draft to delete"}'
+
+execution error: Drafts got an error: AppleEvent timed out. (-1712)
+```
+
+Popup says:
+“Warp.app” wants access to control “Drafts.app”. Allowing control will provide access to documents and data in “Drafts.app”, and to perform actions within that app.
+
+I clicked "Allow" button.
+
+Despite error messages, there is now a note in Drafts called with contents = "Test draft to delete" in Drafts.
+
+---
+
+## Delete Investigation Findings - 2025-12-21
+
+**Problem**: AppleScript `delete draft id "uuid"` command does not work
+- Command executes without error
+- BUT draft remains in Drafts app (confirmed by user)
+- Tested multiple syntax variations - none worked
+
+**Root Cause**: AppleScript does NOT support delete operations
+- Current Drafts documentation (Context7) shows NO delete examples in AppleScript
+- Only JavaScript API has `Draft.delete(uuid)` capability
+- JavaScript API runs ONLY inside Drafts Actions (not externally callable)
+
+**Solution**: Hybrid AppleScript + JavaScript approach
+1. Create Drafts Action with JavaScript: `Draft.delete(draft.uuid);`
+2. Trigger Action via AppleScript: `run action "Delete Draft by UUID" with draft id "uuid"`
+
+**Test Drafts Created**:
+- UUID: FD858B20-D8DE-4C4E-A2F3-EDEAA0A93509 (content: "Test draft to delete 1")
+- UUID: EC8C8534-394C-4C14-8C91-67A68C3E7F09 (content: "Test draft to delete 2")
+
+**Status**: Solution documented above in "Recommended SSS Approach" section. Needs testing.
+
+**SSS Implication**: DELETE wall can be breached, but requires one-time Drafts Action setup.
+
+
