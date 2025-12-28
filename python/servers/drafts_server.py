@@ -1,251 +1,414 @@
 """
-Drafts MCP Server - SiloSlayer A-Team Integration
+Drafts MCP Server - Full CRUD Operations for Drafts App
 
-Provides tools and resources for interacting with Drafts notes,
-enabling the A-Team to process the 1219+ note backlog and route
-new information intelligently.
+Provides MCP tools for complete CRUD operations on Drafts notes via AppleScript.
 
-This server focuses on Mac-based integration via Drafts' URL schemes
-and potential file system access for bulk operations.
+SETUP REQUIRED (One-time):
+    1. Open Drafts app
+    2. Create new Action: "Delete Draft by UUID"
+    3. Add Script step with JavaScript: Draft.delete(draft.uuid);
+    4. Save action
+
+After setup, all CRUD operations work via MCP tools.
 """
 
 from mcp.server.fastmcp import FastMCP
-import subprocess
-import urllib.parse
-import json
-import os
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from syndicate.drafts_crud_operations import DraftsConnection, DraftsConfig, DraftsError
 from typing import List, Dict, Optional
-from datetime import datetime
+import json
 
-mcp = FastMCP("drafts_server")
+# Initialize MCP server
+mcp = FastMCP("drafts")
+
+# Initialize Drafts connection (shared across all tool calls)
+_drafts_config = DraftsConfig(verbose=False)
+_drafts = DraftsConnection(_drafts_config)
+
+
+# ========== CREATE ==========
 
 @mcp.tool()
-async def get_drafts_inbox_count() -> int:
-    """Get the current count of unprocessed notes in Drafts inbox.
-    
-    Returns:
-        Number of drafts in inbox
+async def create_draft(content: str, tags: Optional[List[str]] = None) -> str:
     """
-    # This would integrate with Drafts URL scheme: drafts://get?uuid=count
-    # For now, returning the known count from our documentation
-    return 1219
+    Create a new draft in Drafts app.
 
-@mcp.tool() 
-async def get_recent_drafts(limit: int = 20) -> List[Dict]:
-    """Get recent drafts from the inbox for AI-assisted triage.
-    
     Args:
-        limit: Maximum number of recent drafts to retrieve (default 20)
-        
+        content: Text content for the draft
+        tags: Optional list of tags (e.g., ["work", "important"])
+
     Returns:
-        List of draft objects with id, content, created_date, tags
+        UUID of the created draft
+
+    Example:
+        create_draft("Meeting notes from today", tags=["work", "2025"])
     """
-    # This would use Drafts URL scheme or scripting integration
-    # For prototype, returning mock data structure
-    recent_drafts = []
-    for i in range(min(limit, 10)):
-        recent_drafts.append({
-            "id": f"draft-{i+1}",
-            "content": f"Sample draft content {i+1} - needs categorization",
-            "created_date": datetime.now().isoformat(),
-            "tags": ["inbox"],
-            "length": 50 + i * 10
+    try:
+        uuid = _drafts.create_draft(content, tags)
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "message": f"Draft created with UUID: {uuid}"
         })
-    return recent_drafts
-
-@mcp.tool()
-async def categorize_draft_content(content: str) -> Dict:
-    """Analyze draft content and suggest categorization.
-    
-    Args:
-        content: The text content of the draft
-        
-    Returns:
-        Categorization suggestion with destination, confidence, and reasoning
-    """
-    # Basic keyword-based categorization logic
-    content_lower = content.lower()
-    
-    # Financial/Investment keywords
-    financial_keywords = ["stock", "invest", "portfolio", "dividend", "market", "trading", "crypto", "bitcoin", "401k", "ira"]
-    
-    # Technical/Development keywords  
-    tech_keywords = ["code", "python", "javascript", "api", "server", "database", "deploy", "github", "programming", "debug"]
-    
-    # Personal keywords
-    personal_keywords = ["family", "vacation", "grocery", "doctor", "appointment", "birthday", "phone number", "address"]
-    
-    # Ephemeral/Reference keywords
-    ephemeral_keywords = ["password", "code", "pin", "confirmation", "verification", "temp", "quick note"]
-    
-    confidence = 0.0
-    destination = "Drafts"  # Default safety net
-    reasoning = "Default routing - content not clearly categorized"
-    
-    # Check for financial content
-    financial_matches = sum(1 for keyword in financial_keywords if keyword in content_lower)
-    if financial_matches >= 2:
-        destination = "Obsidian Main"
-        confidence = 0.8
-        reasoning = f"Financial content detected ({financial_matches} keywords)"
-    
-    # Check for technical content  
-    tech_matches = sum(1 for keyword in tech_keywords if keyword in content_lower)
-    if tech_matches >= 2:
-        destination = "Obsidian Tech" 
-        confidence = 0.8
-        reasoning = f"Technical content detected ({tech_matches} keywords)"
-    
-    # Check for personal content
-    personal_matches = sum(1 for keyword in personal_keywords if keyword in content_lower)
-    if personal_matches >= 1:
-        destination = "Bear"
-        confidence = 0.7
-        reasoning = f"Personal content detected ({personal_matches} keywords)"
-        
-    # Check for ephemeral content
-    ephemeral_matches = sum(1 for keyword in ephemeral_keywords if keyword in content_lower)
-    if ephemeral_matches >= 1:
-        destination = "1Password" if any(k in content_lower for k in ["password", "pin", "code"]) else "Digital Junk Drawer"
-        confidence = 0.9
-        reasoning = f"Ephemeral/reference content detected ({ephemeral_matches} keywords)"
-    
-    return {
-        "destination": destination,
-        "confidence": confidence,
-        "reasoning": reasoning,
-        "content_preview": content[:100] + "..." if len(content) > 100 else content
-    }
-
-@mcp.tool()
-async def route_draft_to_destination(draft_id: str, destination: str, content: str, rationale: str) -> Dict:
-    """Route a draft to its destination tool and remove from Drafts inbox.
-    
-    Args:
-        draft_id: The ID of the draft to route
-        destination: Target destination (Obsidian Main, Obsidian Tech, Bear, 1Password, etc.)
-        content: The content to route
-        rationale: AI reasoning for the routing decision
-        
-    Returns:
-        Result of the routing operation
-    """
-    # This would integrate with destination APIs/URL schemes
-    # Actions for Obsidian, Bear API, 1Password CLI, etc.
-    
-    result = {
-        "draft_id": draft_id,
-        "destination": destination,
-        "status": "success",
-        "timestamp": datetime.now().isoformat(),
-        "rationale": rationale
-    }
-    
-    # Mock implementation - in real version would call appropriate APIs
-    if destination == "Obsidian Main":
-        result["action"] = "Added to Obsidian Main vault via Actions for Obsidian"
-    elif destination == "Obsidian Tech":
-        result["action"] = "Added to Obsidian Tech vault via Actions for Obsidian"
-    elif destination == "Bear":
-        result["action"] = "Created new Bear note via Bear API"
-    elif destination == "1Password":
-        result["action"] = "Added to 1Password as secure note"
-    elif destination == "Digital Junk Drawer":
-        result["action"] = "Added to searchable reference storage"
-    else:
-        result["status"] = "kept_in_drafts"
-        result["action"] = "Remained in Drafts for manual review"
-    
-    return result
-
-@mcp.tool()
-async def bulk_categorize_drafts(limit: int = 50) -> List[Dict]:
-    """Perform bulk categorization of multiple drafts for batch processing.
-    
-    Args:
-        limit: Maximum number of drafts to process in this batch
-        
-    Returns:
-        List of categorization results for batch review
-    """
-    drafts = await get_recent_drafts(limit)
-    results = []
-    
-    for draft in drafts:
-        categorization = await categorize_draft_content(draft["content"])
-        results.append({
-            "draft_id": draft["id"],
-            "content_preview": draft["content"][:50] + "...",
-            "suggested_destination": categorization["destination"],
-            "confidence": categorization["confidence"],
-            "reasoning": categorization["reasoning"]
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
         })
-    
-    return results
+
+
+# ========== READ ==========
 
 @mcp.tool()
-async def create_quick_note(content: str, destination: str = "auto") -> Dict:
-    """Create a new note and route it directly, bypassing Drafts inbox.
-    
-    Args:
-        content: The note content
-        destination: Target destination or 'auto' for AI routing
-        
-    Returns:
-        Result of the note creation and routing
+async def get_draft(uuid: str) -> str:
     """
-    if destination == "auto":
-        categorization = await categorize_draft_content(content)
-        destination = categorization["destination"]
-        rationale = f"Auto-routed: {categorization['reasoning']}"
-    else:
-        rationale = f"Manual destination: {destination}"
-    
-    # Create temporary draft ID for routing
-    temp_id = f"quick-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-    
-    result = await route_draft_to_destination(temp_id, destination, content, rationale)
-    result["quick_note"] = True
-    
-    return result
+    Get content and metadata of a specific draft.
 
-@mcp.resource("drafts://inbox/stats")
-async def read_inbox_stats() -> str:
-    """Provide current Drafts inbox statistics and processing metrics."""
-    total_count = await get_drafts_inbox_count()
-    
-    stats = {
-        "total_inbox_count": total_count,
-        "target_monthly_processing": 100,
-        "target_daily_processing": 3,
-        "success_metric": "Reduce growth rate from 50+/month to 5-10/month",
-        "processing_priority": "Recent 20-50 items with AI assistance",
-        "last_updated": datetime.now().isoformat()
-    }
-    
-    return json.dumps(stats, indent=2)
+    Args:
+        uuid: Draft UUID
 
-@mcp.resource("drafts://categorization/rules")
-async def read_categorization_rules() -> str:
-    """Provide the current categorization rules and keyword mappings."""
-    rules = {
-        "high_confidence_routes": {
-            "Obsidian Main": ["financial", "investment", "portfolio", "stock", "trading", "crypto", "dividend"],
-            "Obsidian Tech": ["code", "programming", "python", "javascript", "api", "server", "deploy", "github"],
-            "Bear": ["personal", "family", "phone", "address", "appointment", "grocery"],
-            "1Password": ["password", "pin", "verification", "confirmation code"],
-            "Digital Junk Drawer": ["reference", "url", "link", "bathroom code", "temp info"]
-        },
-        "medium_confidence_processing": "Present 2-3 options with reasoning",
-        "low_confidence_fallback": "Default to Drafts safety net",
-        "confidence_thresholds": {
-            "auto_route": 0.8,
-            "suggest_options": 0.5,
-            "safety_net": 0.0
+    Returns:
+        JSON with draft content and tags
+
+    Example:
+        get_draft("ABC-123-DEF-456")
+    """
+    try:
+        content = _drafts.get_draft_content(uuid)
+        tags = _drafts.get_draft_tags(uuid)
+        title = content.split('\n')[0] if content else ''
+
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "content": content,
+            "title": title,
+            "tags": tags
+        }, indent=2)
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+@mcp.tool()
+async def list_drafts(limit: int = 20) -> str:
+    """
+    List recent drafts.
+
+    Args:
+        limit: Maximum number of drafts to return (default 20)
+
+    Returns:
+        JSON array of drafts with uuid, title, content preview
+
+    Example:
+        list_drafts(10)  # Get 10 most recent drafts
+    """
+    try:
+        drafts = _drafts.list_drafts(limit=limit)
+
+        # Add content preview to each draft
+        for draft in drafts:
+            preview_length = 100
+            draft['preview'] = (
+                draft['content'][:preview_length] + "..."
+                if len(draft['content']) > preview_length
+                else draft['content']
+            )
+
+        return json.dumps({
+            "status": "success",
+            "count": len(drafts),
+            "drafts": drafts
+        }, indent=2)
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+@mcp.tool()
+async def search_drafts(query: str) -> str:
+    """
+    Search drafts by content.
+
+    Args:
+        query: Search query string
+
+    Returns:
+        JSON array of matching drafts
+
+    Example:
+        search_drafts("project update")
+    """
+    try:
+        results = _drafts.search_drafts(query)
+
+        return json.dumps({
+            "status": "success",
+            "query": query,
+            "count": len(results),
+            "results": results
+        }, indent=2)
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+@mcp.tool()
+async def count_drafts() -> str:
+    """
+    Get total count of drafts in Drafts app.
+
+    Returns:
+        JSON with draft count
+
+    Example:
+        count_drafts()
+    """
+    try:
+        count = _drafts.count_drafts()
+        return json.dumps({
+            "status": "success",
+            "total_drafts": count
+        })
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+# ========== UPDATE ==========
+
+@mcp.tool()
+async def update_draft(uuid: str, content: str) -> str:
+    """
+    Update the content of an existing draft.
+
+    Args:
+        uuid: Draft UUID
+        content: New content to replace existing content
+
+    Returns:
+        JSON status message
+
+    Example:
+        update_draft("ABC-123", "Updated content here")
+    """
+    try:
+        _drafts.update_draft_content(uuid, content)
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "message": "Draft updated successfully"
+        })
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+@mcp.tool()
+async def add_tag_to_draft(uuid: str, tag: str) -> str:
+    """
+    Add a tag to an existing draft.
+
+    Args:
+        uuid: Draft UUID
+        tag: Tag to add
+
+    Returns:
+        JSON status message
+
+    Example:
+        add_tag_to_draft("ABC-123", "processed")
+    """
+    try:
+        _drafts.add_tag(uuid, tag)
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "tag": tag,
+            "message": f"Tag '{tag}' added to draft"
+        })
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+# ========== DELETE ==========
+
+@mcp.tool()
+async def delete_draft(uuid: str) -> str:
+    """
+    Delete a draft by UUID.
+
+    REQUIRES one-time Drafts Action setup:
+        1. Open Drafts app
+        2. Create Action: "Delete Draft by UUID"
+        3. Add Script step: Draft.delete(draft.uuid);
+        4. Save
+
+    Args:
+        uuid: Draft UUID to delete
+
+    Returns:
+        JSON status message
+
+    Example:
+        delete_draft("ABC-123-DEF")
+    """
+    try:
+        _drafts.delete_draft(uuid)
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "message": "Draft deleted successfully"
+        })
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e),
+            "help": "If error mentions missing action, create 'Delete Draft by UUID' action in Drafts app first"
+        })
+
+
+# ========== HELPER UTILITIES ==========
+
+@mcp.tool()
+async def get_first_draft() -> str:
+    """
+    Get the first (most recent) draft.
+
+    Returns:
+        JSON with draft UUID, content, and tags
+
+    Example:
+        get_first_draft()  # Get most recent draft for quick testing
+    """
+    try:
+        uuid = _drafts.get_first_uuid()
+        if not uuid:
+            return json.dumps({
+                "status": "success",
+                "message": "No drafts found",
+                "uuid": None
+            })
+
+        content = _drafts.get_draft_content(uuid)
+        tags = _drafts.get_draft_tags(uuid)
+
+        return json.dumps({
+            "status": "success",
+            "uuid": uuid,
+            "content": content,
+            "title": content.split('\n')[0] if content else '',
+            "tags": tags
+        }, indent=2)
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+@mcp.tool()
+async def find_draft_by_title(title: str) -> str:
+    """
+    Find draft UUID by title (first line of content).
+
+    Args:
+        title: Title to search for (case-sensitive)
+
+    Returns:
+        JSON with UUID if found, or null if not found
+
+    Example:
+        find_draft_by_title("Meeting Notes")
+    """
+    try:
+        uuid = _drafts.get_uuid_by_title(title)
+        if uuid:
+            return json.dumps({
+                "status": "success",
+                "title": title,
+                "uuid": uuid
+            })
+        else:
+            return json.dumps({
+                "status": "success",
+                "title": title,
+                "uuid": None,
+                "message": "No draft found with that title"
+            })
+    except DraftsError as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e)
+        })
+
+
+# ========== RESOURCES ==========
+
+@mcp.resource("drafts://connection/info")
+async def connection_info() -> str:
+    """Provide information about Drafts connection and setup status."""
+    try:
+        count = _drafts.count_drafts()
+        first_uuid = _drafts.get_first_uuid()
+
+        info = {
+            "status": "connected",
+            "total_drafts": count,
+            "connection_working": True,
+            "delete_action_name": _drafts.config.delete_action_name,
+            "delete_setup_required": "Create 'Delete Draft by UUID' action in Drafts app",
+            "first_draft_uuid": first_uuid,
+            "verbose_logging": _drafts.config.verbose
         }
+        return json.dumps(info, indent=2)
+    except Exception as e:
+        return json.dumps({
+            "status": "error",
+            "error": str(e),
+            "message": "Cannot connect to Drafts app"
+        }, indent=2)
+
+
+@mcp.resource("drafts://setup/instructions")
+async def setup_instructions() -> str:
+    """Provide setup instructions for delete capability."""
+    instructions = {
+        "title": "Drafts Delete Action Setup (One-Time)",
+        "steps": [
+            "1. Open Drafts app on your Mac",
+            "2. Click '+' to create new Action",
+            "3. Name it: 'Delete Draft by UUID'",
+            "4. Add Action Step → Script",
+            "5. Enter JavaScript: Draft.delete(draft.uuid);",
+            "6. Save the action",
+            "7. Test with: delete_draft(some_uuid)"
+        ],
+        "why_needed": "AppleScript cannot delete drafts directly - requires JavaScript API via Drafts Action",
+        "test_command": "delete_draft('test-uuid-here')",
+        "verification": "After setup, delete_draft() will work from Python/MCP"
     }
-    
-    return json.dumps(rules, indent=2)
+    return json.dumps(instructions, indent=2)
+
 
 if __name__ == "__main__":
     mcp.run(transport='stdio')
