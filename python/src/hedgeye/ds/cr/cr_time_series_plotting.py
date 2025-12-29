@@ -23,7 +23,7 @@ import numpy as np
 from hedgeye.config_loader import load_config
 from hedgeye.ds.rr.use_rr import load_all_risk_range_data
 from hedgeye.ds.prices.price_cache import get_daily_prices
-from hedgeye.ds.cr.cr_merge_ranges import load_mapping_table
+from hedgeye.ds.cr.cr_merge_ranges import load_mapping_table, get_latest_file
 
 try:
     import yfinance as yf
@@ -524,7 +524,10 @@ def plot_cr_time_series_test(tickers: list, days_back: int = 30, output_dir: Opt
 
 def get_all_ep_tickers() -> List[str]:
     """
-    Get all unique tickers from EP weekly CSVs.
+    Get all unique tickers from ALL EP weekly CSVs (historical).
+    
+    Note: This includes tickers that may have been removed from the portfolio.
+    For current portfolio only, use get_current_ep_tickers().
     
     Returns:
         Sorted list of unique ticker symbols
@@ -543,6 +546,30 @@ def get_all_ep_tickers() -> List[str]:
             all_tickers.update(df['ticker'].unique())
     
     return sorted(list(all_tickers))
+
+
+def get_current_ep_tickers() -> List[str]:
+    """
+    Get tickers from the CURRENT (latest) EP portfolio only.
+    
+    This excludes tickers that have been removed from the portfolio.
+    
+    Returns:
+        Sorted list of ticker symbols in current portfolio
+    """
+    config = load_config()
+    ep_csv_dir = Path(config["paths"]["etf_pro_csv_dir"])
+    
+    # Get latest file only
+    latest_file = get_latest_file(ep_csv_dir, "etf_pro_weekly_*.csv")
+    if not latest_file:
+        print(f"⚠️  No EP weekly files found in {ep_csv_dir}")
+        return []
+    
+    df = pd.read_csv(latest_file)
+    tickers = sorted(df['ticker'].unique().tolist())
+    print(f"  ✓ Found {len(tickers)} tickers in current EP portfolio ({latest_file.name})")
+    return tickers
 
 
 def generate_all_cr_time_series_plots(
@@ -580,10 +607,10 @@ def generate_all_cr_time_series_plots(
         print(f"⚠️  Mapping file not found: {mapping_path}")
         mapping_df = pd.DataFrame()
     
-    # Get all tickers from EP data
-    all_tickers = get_all_ep_tickers()
+    # Get tickers from current EP portfolio (not historical)
+    all_tickers = get_current_ep_tickers()
     if not all_tickers:
-        print("❌ No tickers found in EP weekly CSVs")
+        print("❌ No tickers found in current EP portfolio")
         return {'total': 0, 'successful': 0, 'failed': 0, 'ep_only': 0, 'failed_list': []}
     
     # Apply filter if provided

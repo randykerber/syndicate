@@ -1,5 +1,8 @@
 # Issues with CR (Combined Ranges) plots
 
+## TODO
+- [ ] Regenerate all 9 weeks of EP CSV files with new HTML parser (currently only Dec 28 regenerated)
+
 For any data point, for what day should it be in the plot.
 
 ### Trend Ranges
@@ -36,6 +39,8 @@ WOOD -- indicate it's a short
 
 PINK -- now RR, proxy = XLV
 
+UUP -- ineffective proxy
+
 
 ## Should be excluded
 - Based on what?
@@ -46,16 +51,11 @@ PINK -- now RR, proxy = XLV
     - IEF
     - IVOL
     - IWC
-    - IWM, QQQ - keep because in RR ?
-    - MAGS
     - NIKL
     - PFIX
-    - PPLT
     - QTUM
     - ROBO
-    - UFO
     - URA
-    - XLI
 
 ### Monday 
 
