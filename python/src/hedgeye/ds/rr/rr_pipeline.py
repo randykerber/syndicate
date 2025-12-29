@@ -69,12 +69,16 @@ def run_rr_basic_plots_step(df: Optional[pd.DataFrame] = None) -> None:
     print("✅ Basic plotting completed")
 
 
-def run_rr_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> None:
+def run_rr_enhanced_plots_step(df: Optional[pd.DataFrame] = None, 
+                               start_date: str = "2025-10-01",
+                               **kwargs) -> None:
     """
     Run enhanced Risk Range plotting step with FMP price integration.
     
     Args:
         df: Optional DataFrame. If None, loads combined data.
+        start_date: Earliest date to include in plots (default: 2025-10-01).
+                    RR data has a gap from end of June to October, so we exclude earlier data.
         **kwargs: Additional options for enhanced plotting
     """
     print("=== Generating Enhanced Risk Range Plots ===")
@@ -83,14 +87,9 @@ def run_rr_enhanced_plots_step(df: Optional[pd.DataFrame] = None, **kwargs) -> N
         df = load_all_risk_range_data()
         df['index'] = df['index'].apply(canonicalize_symbol)
     
-    # Option 1: Generate plots for all symbols with latest prices
-    print("\n1. Generating all plots with latest FMP prices...")
-    generate_enhanced_plots(df, include_latest_prices=True, **kwargs)
-    
-    # Option 2: Generate plots for specific symbols only
-    print("\n2. Generating plots for select symbols...")
-    test_symbols = ['AAPL', 'SPX', 'TSLA', 'EUR/USD', 'GOLD']
-    generate_enhanced_plots(df, include_latest_prices=True, symbols_to_plot=test_symbols)
+    # Generate plots for all symbols with latest prices
+    print(f"\nGenerating all plots with latest FMP prices (data from {start_date} onwards)...")
+    generate_enhanced_plots(df, include_latest_prices=True, start_date=start_date, **kwargs)
 
     # Option 3: Create summary dashboard (DISABLED - not useful currently)
     # TODO: Redesign high-utility dashboard later
@@ -111,6 +110,7 @@ def run_full_rr_pipeline(
     combine_data: bool = True, 
     generate_basic_plots: bool = False,
     generate_enhanced_plots: bool = True,
+    start_date: str = "2025-10-01",
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -121,6 +121,8 @@ def run_full_rr_pipeline(
         combine_data: Whether to run data combination step  
         generate_basic_plots: Whether to generate basic plots
         generate_enhanced_plots: Whether to generate enhanced plots
+        start_date: Earliest date to include in plots (default: 2025-10-01).
+                    RR data has a gap from end of June to October.
         **kwargs: Additional options passed to plotting functions
         
     Returns:
@@ -140,7 +142,7 @@ def run_full_rr_pipeline(
         run_rr_basic_plots_step(df)
         
     if generate_enhanced_plots:
-        run_rr_enhanced_plots_step(df, **kwargs)
+        run_rr_enhanced_plots_step(df, start_date=start_date, **kwargs)
     
     print("✅ Full pipeline completed")
     
@@ -163,19 +165,21 @@ def run_rr_data_pipeline() -> pd.DataFrame:
     )
 
 
-def run_rr_plotting_pipeline(df: Optional[pd.DataFrame] = None) -> None:
+def run_rr_plotting_pipeline(df: Optional[pd.DataFrame] = None, 
+                            start_date: str = "2025-10-01") -> None:
     """Run just the Risk Range plotting pipeline (enhanced plots only)."""
     if df is None:
         df = load_all_risk_range_data()
         df['index'] = df['index'].apply(canonicalize_symbol)
     
-    run_rr_enhanced_plots_step(df)
+    run_rr_enhanced_plots_step(df, start_date=start_date)
 
 
-def run_rr_refresh_pipeline() -> pd.DataFrame:
+def run_rr_refresh_pipeline(start_date: str = "2025-10-01") -> pd.DataFrame:
     """Run Risk Range pipeline to refresh plots with latest data (no parsing)."""
     return run_full_rr_pipeline(
         parse_emails=False,
         combine_data=True,
-        generate_enhanced_plots=True
+        generate_enhanced_plots=True,
+        start_date=start_date
     )

@@ -151,7 +151,8 @@ def display_rr_with_latest_price(df: pd.DataFrame, index_symbol: str,
 
 def generate_enhanced_plots(df: Optional[pd.DataFrame] = None, 
                           include_latest_prices: bool = True,
-                          symbols_to_plot: Optional[list] = None):
+                          symbols_to_plot: Optional[list] = None,
+                          start_date: str = "2025-10-01"):
     """
     Generate enhanced plots for all symbols with latest FMP prices.
     
@@ -159,12 +160,24 @@ def generate_enhanced_plots(df: Optional[pd.DataFrame] = None,
         df: Hedgeye risk range data (loads if None)
         include_latest_prices: Whether to fetch and include latest FMP prices
         symbols_to_plot: List of specific symbols to plot (plots all if None)
+        start_date: Earliest date to include in plots (default: 2025-10-01).
+                    Data before this date is excluded. Set to None to include all data.
     """
     config = load_config()
     
     # Load data if not provided
     if df is None:
         df = load_all_risk_range_data()
+    
+    # Apply date filter to exclude data before start_date
+    if start_date is not None:
+        df["date"] = pd.to_datetime(df["date"])
+        cutoff = pd.to_datetime(start_date)
+        original_count = len(df)
+        df = df[df["date"] >= cutoff].copy()
+        filtered_count = original_count - len(df)
+        if filtered_count > 0:
+            print(f"📅 Filtered out {filtered_count} records before {start_date}")
     
     # Get latest prices if requested
     latest_prices = None
