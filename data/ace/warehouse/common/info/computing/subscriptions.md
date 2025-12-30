@@ -6,23 +6,28 @@
 
 ### Code Editors & IDEs
 - **Cursor**: Pro ($20/mo)
-- **IntelliJ IDEA**: Ultimate Individual license ($119/year, longtime customer discount)
+- **IntelliJ IDEA**: Ultimate Individual license ($119/year)
 
 ### AI Assistants
 - **Claude**: Max ($100/mo)
-- **ChatGPT**: Plus ($20/mo) - [tier name may vary, confirm if needed]
-- **Gemini**: [subscription status TBD]
-- **Perplexity**: [subscription status TBD]
+- **ChatGPT**: Plus ($20/mo)
+- **Gemini**: Google One / Google AI Pro
+- **Perplexity**: Pro
+
+### AI Coding Assistants
+- **Claude Code**
+- **Gemini CLI**
+- **Warp Agent**
 
 ### Terminal & Development
-- **Warp**: Pro (paid subscription, tier name unknown)
+- **Warp**: Build plan ($20/month)
 
 ## Productivity Tools
 
 ### Notes & PKM
-- **Obsidian**: Sync ($8/mo) - Note: NOT Catalyst tier, standard with Sync add-on
-- **Drafts**: Pro ($19.99/year)
-- **Bear**: [subscription status TBD]
+- **Obsidian**: Catalyst tier, with Obsidian Sync add-on
+- **Drafts**: Pro ($20/year)
+- **Bear**: Pro ($15/year)
 
 ### Task Management & Launcher
 - **Things**: Purchased (one-time, not subscription)
@@ -32,12 +37,19 @@
 - **Superwhisper**: [subscription status TBD]
 - **Wispr Flow**: [subscription status TBD]
 
-### Passwords
-- **1Password**: [subscription status TBD]
-
 ## Utility & System
-- **Arc Browser**: Free (as of last update)
+
+### Passwords & Authentication
+- **1Password**: Families plan
 - **Authy**: Free
+
+
+## Investing Tools and Services
+- **Hedgeye**: Macro Pro
+- **TradingView.com**: Premium
+- **FMP (Financial Modeling Prep)**: Starter ($29/month)
+- **FRED**: Free
+- **OpenFIGI**: Free
 
 ---
 
