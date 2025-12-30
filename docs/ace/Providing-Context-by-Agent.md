@@ -1,3 +1,18 @@
+# How various AI Agent Hangle and use Context
+
+## Gemini
+
+### Gemini in Chrome
+
+In Settings >> Personal Context:
+
+Learn from past chats
+
+Gemini learns from your past chats, understanding more about you and your world to personalize your experience. Gemini Apps Activity needs to be on to use this feature. You can manage and delete your past
+chats, or turn this off anytime with this setting.
+
+================================================
+
 # Providing Context by Agent - Quick Reference
 
 **Purpose**: Document how each AI agent/tool receives context, system instructions, and user preferences.
@@ -156,6 +171,17 @@
 - Can ask "what do you know about me?"
 
 **Status**: Less mature than ChatGPT memories, evolving rapidly
+
+---
+
+### Gemini in Chrome
+
+In Settings >> Personal Context:
+
+Learn from past chats
+
+Gemini learns from your past chats, understanding more about you and your world to personalize your experience. Gemini Apps Activity needs to be on to use this feature. You can manage and delete your past
+chats, or turn this off anytime with this setting.
 
 ---
 
