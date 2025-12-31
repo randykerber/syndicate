@@ -2,6 +2,14 @@
 
 This file provides project-specific guidance to Claude Code when working with the Syndicate codebase.
 
+---
+
+## 🗺️ Context Map
+
+**⚠️ FIRST**: Read `data/ace/CONTEXT_MAP.md` — master index of available context sources and loading instructions.
+
+---
+
 ## User Context
 
 Randy Kerber — AI/Data Engineer & Software Developer (Python, TypeScript, Scala). Based in Cañon City, Colorado (America/Denver).
