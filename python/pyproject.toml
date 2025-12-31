@@ -35,6 +35,7 @@ dependencies = [
     "jupyter>=1.1.1",
     "yfinance>=0.2.63",
     "claude-agent-sdk>=0.1.16",
+    "sqlalchemy>=2.0.45",
 ]
 
 [dependency-groups]
