@@ -13,3 +13,9 @@
 !ace/custom/**
 !ace/warehouse/
 !ace/warehouse/**
+# EXCEPTION: Keep Context Map (curated, not generated)
+!ace/CONTEXT_MAP.md
+
+# EXCEPTION: Keep skills (authored content)
+!ace/skills/
+!ace/skills/**
