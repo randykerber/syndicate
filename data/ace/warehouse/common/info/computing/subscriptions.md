@@ -51,6 +51,10 @@
 - **FRED**: Free
 - **OpenFIGI**: Free
 
+## Personal Interests
+- **Paprika Recipe Manager 3**: Paid
+
+
 ---
 
 ## Notes

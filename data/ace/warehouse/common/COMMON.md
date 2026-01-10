@@ -61,7 +61,7 @@ Under no circumstances should any response be fabricated, simplified, or stated 
 
 ### Terminal & Shell
 - **Terminal**: Warp (Pro) - primary terminal application
-- **Shell**: zsh (interactive), bash (for shell scripts)
+- **Shell**: zsh (interactive), bash (for shell scripts) are only shells used
 
 ### Code Editors & IDEs
 - **IntelliJ IDEA Ultimate**: Scala, Python, JavaScript, Shell init
