@@ -46,19 +46,24 @@ The **Silo-Slayer Syndicate System (SSS)** is an agentic AI framework designed t
 
 ```
 syndicate/
-├── python/               # Agent orchestration, AI workflows, MCP servers
-│   ├── src/syndicate/    # Core framework
+├── AGENTS.md             # Cross-tool context (this file)
+├── CLAUDE.md             # Claude Code specific
+├── .cursor/rules/        # Cursor-specific rules (*.mdc)
+├── python/
+│   ├── src/
+│   │   ├── sss/          # Silo-Slayer Syndicate agent framework
+│   │   ├── hedgeye/      # Hedgeye data pipeline package
+│   │   ├── fin/          # Financial data utilities
+│   │   ├── ace/          # ACE context builder tools
+│   │   └── shared/       # Shared utilities
 │   ├── scripts/          # Production scripts
-│   └── servers/          # MCP servers (human-input, push, drafts, etc.)
-├── js/                   # Native tool integrations, UI components
-│   └── src/
-│       ├── agents/       # OpenAI Agent SDK examples
-│       └── tools/        # Tool registry
+│   └── servers/          # MCP servers
+├── js/src/               # Native tool integrations
 ├── config/               # Shared MCP configuration
-├── docs/                 # Documentation
-├── data/                 # Sample data, ACE context factory
-│   └── ace/              # Agentic Context Engineering
-└── context/              # Context source files
+├── data/ace/             # ACE Context Factory
+│   ├── warehouse/        # Source parts library
+│   └── FACTORY-MODEL.md  # Two-stage assembly model
+└── docs/                 # Documentation
 ```
 
 **External Data**: `/Users/rk/d/downloads/hedgeye/` (NOT in project, use absolute paths)
