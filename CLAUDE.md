@@ -264,74 +264,20 @@ Trigger phrases: "latest docs", "current API", "recent changes", or any technica
 
 The goal is creating AI agents that actually work with real tools through intelligent human collaboration, not just impressive demos.
 
-## Current Status: Architecture Complete, Development-Ready
+## Current Status
 
-### ✅ Recently Completed (August 2025)
+Architecture is in place. Current focus is Hedgeye pipeline automation.
 
-**Project Structure Cleanup:**
-- JavaScript project reorganized: proper test structure (`./js/tests/` not `./js/src/__tests__/`)
-- Shared configuration implemented: single `./config/mcp-config.json` used by both Python and JavaScript
-- Python config files moved from `./config/` to proper location in `./python/src/syndicate/`
-- Context engineering system established in `./context/` folder
-
-**Tool Ecosystem Validated:**
-- **37 tools total**: 4 custom + 30 MCP + 3 OpenAI built-ins
-- All tools discoverable through JavaScript ToolRegistry
-- Shared MCP config working across languages
-- Python utility (`shared_config.py`) for accessing shared configs
-
-### 🎯 Core Architecture Status
-
-**Two-Component Architecture Operational:**
-
-1. **Tool Ecosystem**: 
-   - MCP tools: filesystem, obsidian (2 vaults), sequential-thinking, tavily
-   - Python MCP servers: human_input, push, drafts, accounts, market
-   - JavaScript tools: file ops, system commands, reminders
-
-2. **Human-AI Disambiguation System**:
-   - `HumanQueue`: File-based async request/response ✅
-   - `ask_human_choice()` and `ask_human_text()` functions ✅
-   - Push notifications via Pushover ✅
-   - Session-persistent agents with SQLite ✅
-
-**Configuration Management:**
-- Shared configs: `./config/mcp-config.json` (language-agnostic)
-- Python-specific: `./python/src/syndicate/mcp_agent_configs.py`, `weather_config.py`
-- JavaScript reads shared config via `../config/mcp-config.json`
-- Environment variable substitution working in both languages
-
-### 🚀 Next Implementation Priorities
-
-1. **End-to-end demo** - Complete parameter extraction → human disambiguation → tool execution
-2. **Production workflows** - Connect to real Drafts processing, note routing
-3. **Context engineering** - Finalize tiered context strategy (Obsidian → tools)
-4. **Agent templates** - Expand instruction templates for different use cases
-5. **OpenAI Agents SDK session refactoring** - Explore replacing custom SQLite session persistence with new automatic conversation history feature (March 2025 release)
-
-### 🔧 Technical Status
-
-**Development Environment:**
-- IntelliJ configured for JavaScript/TypeScript with proper test structure
-- Python package structure following modern standards
-- Build processes working: `npm run build` (JS), `uv sync` (Python)
-
-**Tool Integration:**
-- JavaScript: 37 tools via ToolRegistry, MCP clients operational
-- Python: Shared config utilities, agent framework ready
-- Both languages can access same MCP servers and configuration
+**What's Working:**
+- Hybrid Python/JS architecture with shared MCP config
+- Human-in-the-loop disambiguation system
+- Session-persistent agents with SQLite
+- Context7 integration for live documentation
 
 **Context System:**
-- Global context: `~/.claude/CLAUDE.md` (user identity/preferences)
-- Project context: `./CLAUDE.md` (working memory, updated freely)
-- Documentation: `./docs/` (human-readable explanations)
-- Context source: `./context/` (canonical Obsidian-managed files)
+- Global: `~/.claude/CLAUDE.md` (user identity/preferences)
+- Project: `./CLAUDE.md` (this file)
+- Cross-tool: `./AGENTS.md` (shared with Cursor, Gemini, etc.)
+- Cursor-specific: `./.cursor/rules/`
 
-**Context7 Integration:**
-- Installed local MCP server: `npm i -g @upstash/context7-mcp`
-- Configured as stdio server (better than remote HTTP)
-- Available globally via user-scoped MCP configuration
-- **Usage pattern**: 2-step process (resolve-library-id → get-library-docs) - documented in global ~/.claude/CLAUDE.md
-- **Status**: ✅ Working - successfully retrieved current Claude Code and OpenAI Agents SDK documentation
-
-**Ready for focused development on core agent patterns and real-world tool integration.**
+See `AGENTS.md` for project structure and key patterns.
