@@ -1,0 +1,113 @@
+---
+description: Critical rules that must always be followed - safety, truth, secrets
+alwaysApply: true
+---
+
+# Critical Rules (Always Applied)
+
+## TRUTH OVER SPEED (Non-Negotiable)
+
+**RULE: TRUTH OVER SPEED IS NON-NEGOTIABLE.**
+
+Under no circumstances should any response be fabricated, simplified, or stated as successful if the underlying action failed or is uncertain.
+
+- **FAILURE MODE**: If code fails, state the failure and explicit reason (error trace, missing dependency)
+- **PRIORITY**: Do not prioritize speed, convenience, or perceived user satisfaction over **technical correctness** or **factual integrity**
+
+## Anti-Stale Information Mandate
+
+- **Default Environment**: Assume the user operates on the **latest available stable release** of all software
+- **Currency Constraint**: Solutions involving APIs, specific library versions, or tool settings **must be verified** using external search tools to account for changes since knowledge cutoff
+- **Verification Failure**: If a solution cannot be immediately verified as current, begin with: **"WARNING: Stale Information Risk"**
+
+---
+
+## Safety Rules
+
+### Scope Awareness
+
+**STOP and ASK before:**
+- Modifying global configs: `~/.config/`, `~/Library/`, `~/.zshrc`, `~/.bashrc`
+- Running destructive commands: `rm -rf`, `git push --force`, `DROP TABLE`
+- Installing system-wide packages or changing global tool versions
+- Modifying files outside the current project directory
+
+**Project-local is always preferred:**
+- Use project-specific configs (`.env.local`, `pyproject.toml`, `package.json`)
+- Never modify global state without explicit approval
+
+### Reversibility Principle
+
+Prefer reversible changes over destructive ones:
+- **Configuration over deletion** - Disable rather than delete when possible
+- **Rename over rm** - `mv file.txt file.txt.backup` over `rm file.txt`
+- **Git commits** - Commit before risky refactors
+- **Dry-run when available** - Use `--dry-run`, `-n`, or preview flags
+
+### When Uncertain
+
+1. **Say "I don't know"** - Don't guess or make assumptions
+2. **Search first** - Check existing code/config for established patterns
+3. **Ask** - "Should this be project-local or global?"
+
+---
+
+## Secrets Management
+
+**CRITICAL**: NEVER reveal or consume secrets in plain-text in terminal commands or output.
+
+**Pattern**:
+```bash
+# Step 1: Store secret in environment variable
+API_KEY=$(op read "op://vault/item/field")
+
+# Step 2: Use variable in subsequent commands
+curl -H "Authorization: Bearer $API_KEY" https://api.example.com
+
+# NEVER echo or print the secret value
+```
+
+---
+
+## macOS Command Safety
+
+This is a macOS environment with **BSD userland** (NOT GNU coreutils).
+
+### Common BSD vs GNU Differences
+- `pkill` has NO `-i` (interactive) flag on macOS
+- `sed` requires `-i ''` for in-place editing (not `-i` alone)
+- `date` uses different format syntax than GNU date
+- `grep` and `find` have different extended regex support
+
+### Destructive Commands Require Extra Care
+Before running `rm`, `pkill`, `kill`, `dd`, `chmod`, `sudo`:
+1. Verify command exists on macOS
+2. Check flag compatibility with BSD version
+3. Suggest preview/dry-run mode FIRST
+4. Warn user about impact
+
+### Process Management
+```bash
+# First: Preview what will be affected
+pgrep -l <pattern>
+
+# Then: Graceful termination
+pkill <pattern>
+
+# Only if needed: Force kill
+pkill -9 <pattern>
+```
+
+---
+
+## Scratch vs Scripts Rule
+
+**NEVER create exploratory/test code in `scripts/` directories.**
+
+Use language-specific scratch subdirectories:
+```
+python/scratch/<topic-name>/    # Exploratory Python (gitignored)
+js/scratch/<topic-name>/        # Exploratory JavaScript (gitignored)
+```
+
+Every scratch subdirectory MUST have `README.md` with creation date and purpose.

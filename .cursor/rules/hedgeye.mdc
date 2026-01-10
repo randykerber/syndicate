@@ -1,0 +1,153 @@
+---
+description: Hedgeye financial data pipeline conventions - paths, CSV processing, price fetching
+globs: ["**/hedgeye/**", "**/data_sources/hedgeye/**"]
+---
+
+# Hedgeye Pipeline Rules
+
+## External Data Location
+
+**CRITICAL**: Hedgeye data is OUTSIDE the project. Always use absolute paths.
+
+```python
+# Good: Absolute paths
+BASE_DIR = "/Users/rk/d/downloads/hedgeye"
+RAW_DIR = "/Users/rk/d/downloads/hedgeye/raw/eml"
+PROD_DIR = "/Users/rk/d/downloads/hedgeye/prod"
+
+# Bad: Relative paths
+csv_path = "../../../d/downloads/hedgeye/prod/file.csv"
+```
+
+## Directory Structure
+
+```
+/Users/rk/d/downloads/hedgeye/
+├── raw/
+│   └── eml/              # Input emails (*.eml)
+├── prod/
+│   ├── ranges/           # Position range CSVs
+│   │   └── enriched/     # Enriched with prices
+│   └── ...
+└── archive/              # Processed/old files
+```
+
+---
+
+## File Naming Conventions
+
+- Input emails: `*.eml` in `/Users/rk/d/downloads/hedgeye/raw/eml/`
+- Processed CSVs: `*_YYYY-MM-DD.csv` format
+- Always include date in output filenames for version tracking
+
+```python
+# Example output path generation
+from datetime import date
+output_path = f"{PROD_DIR}/ranges/position_ranges_{date.today().isoformat()}.csv"
+```
+
+---
+
+## CSV Processing Standards
+
+### Reading CSVs
+Always read with `dtype=str` first, then convert explicitly:
+
+```python
+import pandas as pd
+
+# Good: Explicit types
+df = pd.read_csv(path, dtype=str)
+df['price'] = pd.to_numeric(df['price'], errors='coerce')
+df['report_date'] = pd.to_datetime(df['report_date'])
+
+# Bad: Let pandas guess
+df = pd.read_csv(path)  # May misinterpret ticker symbols as numbers
+```
+
+### Column Naming
+- Use `snake_case` for all column names
+- Include `report_date` column in all outputs
+- Standardize: `ticker`, `price`, `rr_upper`, `rr_lower`, etc.
+
+### Writing CSVs
+```python
+# Standard output pattern
+df.to_csv(output_path, index=False)
+print(f"✓ Wrote {len(df)} rows to {output_path}")
+```
+
+---
+
+## Price Fetching
+
+### Three-Tier Fallback
+1. **FMP mapping** → Use `he_to_fmp.csv` for special symbols
+2. **FMP direct** → Standard ticker lookup
+3. **yfinance** → Fallback for symbols FMP doesn't have
+
+### Special Symbol Mapping
+File: `he_to_fmp.csv` maps Hedgeye symbols to FMP equivalents:
+- Commodities (Gold, Oil, etc.)
+- Forex pairs
+- Index proxies
+
+### When Live Price Unavailable
+Fall back to `rr_prev_close` from the Risk Range report.
+
+### Price Caching
+Cache daily prices in JSON format to avoid repeated API calls:
+```python
+cache_path = f"{PROD_DIR}/cache/prices_{date.today().isoformat()}.json"
+```
+
+---
+
+## Processing Pattern
+
+Standard workflow for any pipeline step:
+
+```python
+def process_file(input_path: str, output_dir: str) -> Optional[Path]:
+    """Process a single input file."""
+    
+    # 1. Check if already processed
+    output_path = generate_output_path(input_path, output_dir)
+    if output_path.exists():
+        print(f"Already processed: {input_path}")
+        return None
+
+    # 2. Process
+    df = load_and_transform(input_path)
+    
+    # 3. Validate
+    if df.empty:
+        print(f"⚠ No data extracted from {input_path}")
+        return None
+
+    # 4. Write output
+    df.to_csv(output_path, index=False)
+    
+    # 5. Log success
+    print(f"✓ Processed: {input_path} → {output_path}")
+    return output_path
+```
+
+---
+
+## Key Pipeline Files
+
+- `merge_position_ranges.py`: Combines ETF Pro + Portfolio Solutions + Risk Range
+- `enrich_position_ranges.py`: Fetches prices, calculates proxy ranges
+- `fetch_prices.py`: Multi-source price fetching with fallbacks
+- `he_to_fmp.csv`: Symbol mapping for special asset types
+
+---
+
+## Common Pitfalls
+
+1. **Don't mix data formats**: Stick to CSV for this pipeline
+2. **Don't assume file locations**: Use config or constants
+3. **Don't skip validation**: Check for empty DataFrames
+4. **Don't break idempotency**: Check if output exists before processing
+5. **Don't hardcode dates**: Use `date.today()` or extract from input

@@ -1,0 +1,149 @@
+---
+description: Python code style, uv package management, type hints, async patterns
+globs: ["**/*.py", "python/**", "pyproject.toml"]
+---
+
+# Python Development Rules
+
+## Package Management - uv ONLY
+
+**MANDATORY**: Use `uv` for all Python package management.
+
+```bash
+uv sync                    # Install dependencies from pyproject.toml
+uv add package-name        # Add new dependency
+uv remove package-name     # Remove dependency
+uv lock --upgrade && uv sync  # Update packages
+uv run python script.py    # Run with project venv
+uv run pytest              # Run tests
+uv run ipython             # Interactive Python
+```
+
+**NEVER suggest**: `pip install`, `python -m venv`, or any legacy pip commands.
+
+---
+
+## Code Style
+
+### Formatting
+- **Formatter**: Black (line length: 88)
+- **Linter**: Ruff (replaces flake8, isort)
+- **Type Checking**: MyPy (strict mode enabled)
+
+### Type Hints
+**Required** for all function signatures:
+
+```python
+# Good: Type hints, descriptive names, docstrings
+def fetch_current_prices(symbols: List[str]) -> Dict[str, float]:
+    """
+    Fetch current prices for given symbols.
+
+    Args:
+        symbols: List of ticker symbols to fetch
+
+    Returns:
+        Dict mapping symbol to current price
+    """
+    prices = {}
+    # Implementation...
+    return prices
+
+# Bad: No types, unclear names
+def get_prices(s):
+    p = {}
+    return p
+```
+
+### Docstrings
+Use Google or NumPy style for public APIs:
+
+```python
+def complex_function(arg1: str, arg2: int) -> Dict[str, Any]:
+    """
+    Brief one-line description.
+
+    Longer explanation if needed. Describe the purpose,
+    not the implementation details.
+
+    Args:
+        arg1: Description of first argument
+        arg2: Description of second argument
+
+    Returns:
+        Description of return value
+
+    Raises:
+        ValueError: When arg2 is negative
+    """
+```
+
+---
+
+## Error Handling
+
+- Use guard clauses early in functions
+- Explicit exception types (avoid bare `except:`)
+- Log errors with context, don't silently fail
+- Return None OR raise exception, don't mix patterns
+
+```python
+# Good: Explicit exception handling
+try:
+    result = risky_operation()
+except FileNotFoundError as e:
+    logger.error(f"Config file missing: {e}")
+    raise
+except ValueError as e:
+    logger.warning(f"Invalid value, using default: {e}")
+    result = default_value
+
+# Bad: Bare except
+try:
+    result = risky_operation()
+except:
+    pass  # Silently swallowed!
+```
+
+---
+
+## Async Code
+
+- Use `async/await` for I/O-bound operations
+- Prefer `asyncio.gather()` for parallel tasks
+- Always use `async with` for async context managers
+
+```python
+# Good: Parallel async operations
+async def fetch_all_prices(symbols: List[str]) -> Dict[str, float]:
+    tasks = [fetch_price(s) for s in symbols]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    return {s: r for s, r in zip(symbols, results) if not isinstance(r, Exception)}
+```
+
+---
+
+## Testing
+
+- Framework: pytest with async support
+- Test files: `test_*.py` in `python/tests/`
+- Use fixtures for common setup
+- Test edge cases and error conditions
+
+### Coverage Goals
+- Core functions: 80%+ coverage
+- Critical paths: 100% coverage
+
+---
+
+## Project Structure
+
+```
+python/
+├── src/syndicate/        # Main package code
+├── scripts/              # Production scripts (promoted from scratch)
+├── scratch/<topic>/      # Exploratory code (gitignored)
+├── servers/              # MCP servers
+├── tests/                # Test files
+└── pyproject.toml        # Dependencies and config
+```
