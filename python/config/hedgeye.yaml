@@ -30,7 +30,7 @@ paths:
   # Combo Ranges (CR) paths
   ranges_base_dir: ${prod_root}/cr/ranges
   p_to_r_mapping_file: ${project_root}/config/hedgeye/data/p-to-r-mapping.yaml
-  cr_plots_dir: ${plot_root}/cr/ranges/cr_timeseries
+  cr_plots_dir: ${plot_root}/cr
 
   # Shared paths
   fmp_data_base_dir: ${fmp_root}/entities

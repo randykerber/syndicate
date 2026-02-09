@@ -207,9 +207,6 @@ def generate_enhanced_plots(df: Optional[pd.DataFrame] = None,
     
     # Create output directory
     output_dir = Path(config["paths"]["plots_output_dir"])
-    if include_latest_prices:
-        output_dir = output_dir.parent / f"plots_with_fmp_{datetime.now().strftime('%Y%m%d')}"
-
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Clean up old plots (remove any .png files not in our current symbol list)
