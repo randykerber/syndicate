@@ -9,10 +9,11 @@
 - **IntelliJ IDEA**: Ultimate Individual license ($119/year)
 
 ### AI Assistants
-- **Claude**: Max ($100/mo)
-- **ChatGPT**: Plus ($20/mo)
+- **Claude**: Max ($100/m)
+- **ChatGPT**: Plus ($20/m)
 - **Gemini**: Google One / Google AI Pro
 - **Perplexity**: Pro
+- **Grok**: Super ($30/m)
 
 ### AI Coding Assistants
 - **Claude Code**
