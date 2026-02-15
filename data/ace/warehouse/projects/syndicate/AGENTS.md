@@ -1,19 +1,5 @@
 # AGENTS.md - Silo-Slayer Syndicate Project
 
-Cross-tool context for AI coding agents (Cursor, Claude Code, Gemini CLI, Codex, etc.)
-
-**Source**: This is the warehouse source for `./AGENTS.md` at project root.  
-**Last Updated**: 2026-01-10
-
----
-
-## About the User
-
-**Name**: Randy Kerber  
-**Mac username**: rk  
-**Location**: Cañon City, Colorado (America/Denver timezone)  
-**Expertise**: Python, Scala, Apache Spark, TypeScript/JavaScript, Knowledge Graphs, Data Pipelines, Finance/Investing
-
 ### Dev Stack & Apps
 
 **PKM**: Obsidian (Tech/Fin vaults), Bear (personal), Drafts (universal capture), Apple Notes  
@@ -72,15 +58,6 @@ syndicate/
 
 ## Development Environment
 
-### Primary Machine
-- **Mac Studio** (hostname: rstudio)
-- Apple M4 Max, 64GB unified memory
-- macOS 26 "Tahoe"
-
-### Terminal & Shell
-- **Terminal**: Warp (Pro)
-- **Shell**: zsh (interactive), bash (scripts)
-- **OS**: macOS = BSD userland, NOT GNU coreutils
 
 ### Package Management
 

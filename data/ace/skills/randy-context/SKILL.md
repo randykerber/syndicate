@@ -5,22 +5,7 @@ description: Randy's basic context - tools, projects, and setup. Use when Randy 
 
 # Randy's Context
 
-## Identity
-- Name: Randy
-- Location: Cañon City, Colorado  
-- Role: AI/Data Engineer, Software Developer
-- Transition: Scala/Spark/Java → Python/JavaScript/TypeScript
-
-## Development Environment
-
-**Primary Workstation:** Mac Studio (hostname: rstudio)
-**Portable:** MacBook Pro 2019 (hostname: idlewood)
-
-**IDEs:**
-- IntelliJ IDEA Ultimate (only JetBrains product)
 - Cursor
-
-**Terminal:** Warp
 
 **Package Managers:**
 - Uses Homebrew on macOS
@@ -62,10 +47,5 @@ description: Randy's basic context - tools, projects, and setup. Use when Randy 
 - Claude Code (CC) - primary coding interface
 - Uses ~/.claude/CLAUDE.md for CC user-level context
 
-**Subscriptions:**
-- Multiple AI services (Claude, ChatGPT, Gemini, Perplexity)
 
-## Key Context Files
-
-- CLAUDE.md location: ~/.claude/CLAUDE.md
 - Abbreviations: CD = Claude Desktop, CC = Claude Code

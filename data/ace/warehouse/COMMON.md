@@ -1,8 +1,5 @@
 # COMMON.md - Shared Context Across All AI Tools
 
-**Last Updated**: 2025-12-12
-**Purpose**: Core identity, environment, tools, and preferences shared by all AI assistants
-
 ---
 
 ## CRITICAL RULES
@@ -25,9 +22,6 @@ Under no circumstances should any response be fabricated, simplified, or stated 
 
 ## About Me
 
-**Name**: Randy Kerber
-**Mac username**: rk
-**Location**: Cañon City, Colorado (America/Denver timezone)
 **Expertise**: Python, Scala, Apache Spark, TypeScript/JavaScript, Knowledge Graphs, Data Pipelines, Finance/Investing
 **Preferred Formats**: Parquet (dataframe persistence), Markdown (general text)
 
