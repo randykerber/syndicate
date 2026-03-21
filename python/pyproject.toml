@@ -36,6 +36,9 @@ dependencies = [
     "yfinance>=0.2.63",
     "claude-agent-sdk>=0.1.16",
     "sqlalchemy>=2.0.45",
+    "reportlab>=4.4.10",
+    # IBKR integration
+    "ib_async>=2.0.0",
 ]
 
 [dependency-groups]
@@ -57,7 +60,8 @@ Documentation = "https://github.com/randykerber/syndicate/docs"
 packages = [
     "src/sss",
     "src/ace",
-    "src/hedgeye"
+    "src/hedgeye",
+    "src/fin"
 ]
 
 [tool.black]
