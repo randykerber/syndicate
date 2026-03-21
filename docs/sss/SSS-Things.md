@@ -11,7 +11,7 @@
 - **Voice Input**: SuperWhisper transcriptions, Siri dictation
 
 ## **Information Stores** (CRUD control)
-- **Primary**: Drafts (1,200+), Obsidian Main/Tech (7,200+), Bear
+- **Primary**: Drafts (1,200+), Obsidian Fin/Tech (7,200+), Bear
 - **Tasks/Time**: Apple Reminders, Things, Calendar
 - **Reference**: 1Password, Apple Notes
 
