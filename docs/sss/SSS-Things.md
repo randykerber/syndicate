@@ -17,12 +17,12 @@
 
 ## **Action Tools** (do things)
 - **Automation**: Raycast extensions, Apple Shortcuts, Siri
-- **Voice Processing**: SuperWhisper (speech-to-text)
+- **Voice Processing**: Wispr Flow, SuperWhisper (speech-to-text)
 - **AI Engines**: OpenAI API/Agents, Anthropic, Gemini, Groq
 
 ## **Software Libraries/APIs**
-- **Platform**: MCP SDK, OpenAI SDK, Node.js ecosystem
-- **App-Specific**: Raycast API, Obsidian Plugin API, Drafts JavaScript
+- **Platform**: MCP SDK, OpenAI SDK, Claude Agent SDK, Node.js ecosystem
+- **App-Specific**: Raycast API, Obsidian Plugin API (or Obsidian CLI?), Drafts JavaScript
 - **System**: macOS APIs via shortcuts/automation
 
 ## **NOTA/TBD Bucket**
@@ -39,7 +39,7 @@
 - **iCloud**: 2TB storage, cross-device sync platform
 - **GitHub**: Repository hosting, issue tracking potential
 - **Jupyter notebooks**: Interactive development from Python project
-- **Luke Gromen**: Content source example (financial analysis)
+- **Luke Gromen**: Content source example (not a great example, conceptual model needs refinement)
 
 ## **Missing Categories?**
 - Communication channels (notifications, push, email)

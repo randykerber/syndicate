@@ -15,7 +15,7 @@ Randy faces a major productivity challenge: daily flood of potential content (po
 - **Snipd (Primary/Highest Volume)**: Investing + tech focus, $84/year renewal due Sept 27
 - **Apple Podcasts**: General interest + some tech
 - **YouTube**: Video/audio, significant overlap with podcast content
-- **Castos**: One paywalled podcast (clunky but only option)
+- **Castos**: One paywalled podcast (clunky, but only option for Grant Williams podcast)
 
 ### Text-Based Sources
 - **Substack**: Major text content source
