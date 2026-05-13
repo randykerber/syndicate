@@ -87,7 +87,7 @@ All agents inherit conversation memory across turns:
 
 **MCP Servers** (Local Tools):
 - `human_input_server.py` - Human-in-the-loop disambiguation (**ESSENTIAL**)
-- `push_server.py` - Mobile push notifications via Pushover
+- `push_server.py` - Mobile push notifications via Pushover (subscription lapsed; account exists, reactivate if needed)
 - `drafts_server.py` - Drafts processing for SiloSlayer mission
 - `accounts_server.py` - Investment/trading account management
 - `market_server.py` - Stock price simulation
@@ -134,8 +134,8 @@ Agent: Creates note with extracted parameters
 ### 3. Tool Composition by Agent Type
 
 **Base Tools** (All Agents):
-- `push_server.py` - Mobile notifications
 - `human_input_server.py` - Human disambiguation
+- `push_server.py` - Mobile notifications (Pushover subscription lapsed; reactivate if needed)
 
 **Specialized Combinations**:
 - **Weather Agent**: Base + weather API + location disambiguation

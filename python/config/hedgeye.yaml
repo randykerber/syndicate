@@ -32,6 +32,9 @@ paths:
   p_to_r_mapping_file: ${project_root}/config/hedgeye/data/p-to-r-mapping.yaml
   cr_plots_dir: ${plot_root}/cr
 
+  # HAM (Hedgeye Asset Management) ETF Holdings
+  ham_csv_dir: /Users/rk/d/downloads/ham
+
   # Shared paths
   fmp_data_base_dir: ${fmp_root}/entities
   fmp_mapping_file: ${fmp_root}/he_to_fmp.csv
