@@ -10,28 +10,11 @@ This file provides project-specific guidance to Claude Code when working with th
 
 ---
 
-## User Context
+## Current Projects
 
-Randy Kerber — AI/Data Engineer & Software Developer (Python, TypeScript, Scala). Based in Cañon City, Colorado (America/Denver).
-
-### Current Projects
-- Hedgeye RR automation + knowledge base (Main repo: `~/gh/randykerber/hedgeye-kb/`)
-- Investing data warehouse (ticker-level) -- Still planning
+- Hedgeye pipeline automation (subproject: `python/hedgeye/` within this repo)
 - Context Engineering + MCP (Model Context Protocol) for AI Agent tools
 - Silo-Slayer Syndicate System (SSS) — agent network to break app/data silos
-
-### Preferences & Rules
-- Concise, Markdown-first; ask before non-read actions or installing tools
-- If IDE/UI steps don't match, **stop and ask for a quick screen description**
-- Assume latest tool versions unless I say otherwise
-
-### Dev Stack & Apps
-Obsidian (iCloud); Drafts; Bear; Apple Notes/Reminders/Calendar/Mail/Messages/Contacts; Raycast; Warp; Emacs; IntelliJ; Claude Code; 1Password; Arc/Chrome/Safari.
-
-### Quick Outcomes
-- Help extract parameters from natural input → exact tool calls
-- Use human-in-the-loop when ambiguities remain (offer options)
-- Keep a minimal checklist of what you changed or created
 
 ## Project Overview
 
@@ -100,11 +83,6 @@ All agents inherit conversation memory across turns:
 - `tools/simple-tools.ts` - File, system operations
 - `mcp/mcp-client-proper.ts` - MCP server communication
 
-**Tool Inventory (38 Total)**:
-- **Custom Tools (4)**: File ops, system commands, reminders
-- **MCP Tools (31)**: Filesystem, Obsidian, sequential-thinking, Tavily, Context7
-- **OpenAI Built-ins (3)**: web_search, code_interpreter, file_search
-
 **Native Integrations** (Superior API access):
 - Raycast extensions for universal launcher integration
 - Drafts actions for note processing (JavaScript runtime)
@@ -149,7 +127,7 @@ Agent: Creates note with extracted parameters
 
 **Target**: 1219+ unprocessed Drafts notes + daily information overflow
 
-**Strategy**: 
+**Strategy**:
 - AI-assisted triage for recent items (reduce growth rate from 50+/month to 5-10/month)
 - Smart routing: Voice/text input → AI categorization → Proper destination
 - "National debt" approach: Prevent growth rather than solve entire backlog
@@ -158,65 +136,42 @@ Agent: Creates note with extracted parameters
 
 ## Usage Patterns
 
-### Creating New Agents
+### Running Syndicate Code
 
-1. **Use instruction templates** from `instruction_templates.py`
-2. **Select appropriate tool combination** from `mcp_params.py`
-3. **Inherit from SyndicateAgent** for automatic session persistence
-4. **Test with human disambiguation** scenarios
-
-### Common Commands
-
-**Python Environment Management (UV - Modern Interface Only)**:
+**MCP Servers**:
 ```bash
 cd python/
-uv sync                    # Install all dependencies from pyproject.toml
-uv add package-name        # Add new dependency  
-uv remove package-name     # Remove dependency
-uv lock --upgrade && uv sync  # Update packages to latest compatible versions
-uv tree                    # Show dependency tree
+uv run servers/human_input_server.py
+uv run servers/push_server.py
+uv run servers/drafts_server.py
 ```
 
-**Running Python Code**:
+**Agents**:
 ```bash
-# Run MCP servers
-uv run servers/human_input_server.py
-uv run servers/push_server.py  
-uv run servers/drafts_server.py
-
-# Run agents
 uv run demos/wendy_weather.py
 uv run python -c "from src.syndicate.agents import WeatherAgent; import asyncio; asyncio.run(WeatherAgent().chat('Paris'))"
-
-# Run development tools
-uv run pytest              # Run tests
-uv run black .             # Format code
-uv run ruff check          # Lint code
 ```
 
-**JavaScript Commands**:
+**Tests & tools**:
+```bash
+uv run pytest
+uv run black .
+uv run ruff check
+```
+
+**JavaScript**:
 ```bash
 cd js/
-npm run build              # Build TypeScript
-npm run tools              # Tool inventory report
-npm update                 # Update packages
+npm run build        # Build TypeScript
+npm run tools        # Tool inventory report
 ```
 
 ## Design Philosophy
 
-### What Makes This Different
-
 **Not Another Chatbot**: Agents execute real tool calls with extracted parameters
-**Not Rule-Based Automation**: AI handles ambiguity and edge cases through conversation  
+**Not Rule-Based Automation**: AI handles ambiguity and edge cases through conversation
 **Not Rigid APIs**: Natural language instructions converted to precise tool execution
 **Not Single-Language**: Hybrid architecture leverages each language's strengths
-
-### Success Metrics
-
-1. **Parameter Extraction Success**: Can AI correctly extract tool parameters from natural input?
-2. **Human Collaboration**: Does multi-turn conversation resolve ambiguity effectively?
-3. **Tool Integration**: Do agents successfully execute real tool calls?
-4. **Information Liberation**: Are users freed from app silos and manual context switching?
 
 ## Key Files to Understand
 
@@ -234,35 +189,9 @@ npm update                 # Update packages
 - `drafts_server.py` - Shows content processing and routing patterns
 - `js/src/agents/reminder-agent.ts` - Working OpenAI Agent SDK example
 
-## Testing Philosophy
+## Available CC Skills (Syndicate-specific)
 
-**Focus on Core Patterns**:
-- Can agents extract parameters from ambiguous input?
-- Does human disambiguation work through multi-turn conversation?
-- Are tool calls executed correctly with resolved parameters?
-
-## Context for Claude Code
-
-When working in this codebase:
-
-1. **Prioritize session persistence** - All agents should maintain conversation memory
-2. **Use instruction templates** - Don't create hardcoded agent instructions from scratch  
-3. **Test human-in-the-loop flows** - AI+human parameter resolution and problem-solving
-4. **Maintain modular tools** - MCP servers should be independent and reusable
-5. **Focus on "English as programming"** - Natural input → Parameter resolution → Tool execution
-6. **Use Context7 for current docs** - When answering questions about APIs, libraries, or tools, always check Context7 first for the latest documentation before providing guidance
-7. **Use UV's modern interface only** - Always use `uv add/remove/sync/run` commands, never suggest pip/venv legacy approaches
-
-**Context7 Usage**: Available via MCP for live API documentation. Use when discussing:
-- OpenAI SDK changes and updates
-- MCP protocol specifications  
-- Library API references
-- Tool configuration guides
-- Framework documentation
-
-Trigger phrases: "latest docs", "current API", "recent changes", or any technical question about external tools.
-
-The goal is creating AI agents that actually work with real tools through intelligent human collaboration, not just impressive demos.
+- `/hedgeye-pipelines` — Hedgeye pipeline conventions: data paths, file naming, CSV processing, three-tier price fallback, key files. Load when working on Hedgeye code.
 
 ## Current Status
 
@@ -272,12 +201,24 @@ Architecture is in place. Current focus is Hedgeye pipeline automation.
 - Hybrid Python/JS architecture with shared MCP config
 - Human-in-the-loop disambiguation system
 - Session-persistent agents with SQLite
-- Context7 integration for live documentation
 
 **Context System:**
 - Global: `~/.claude/CLAUDE.md` (user identity/preferences)
-- Project: `./CLAUDE.md` (this file)
+- Project CC: `./CLAUDE.md` (this file) + `.claude/skills/` (hedgeye-pipelines)
 - Cross-tool: `./AGENTS.md` (shared with Cursor, Gemini, etc.)
 - Cursor-specific: `./.cursor/rules/`
 
-See `AGENTS.md` for project structure and key patterns.
+## Knowledge base (Clob)
+
+Obsidian project hub: `_Claude/ClobProjects/syndicate/SS Syndicate.md`
+Claude entry point: `_Claude/ClobProjects/syndicate/index.md`
+Read index.md at session start for project state and session list.
+
+## Compaction instructions
+
+When compacting, preserve:
+- Current task and immediate next steps
+- Decisions made and their rationale
+- File paths created or modified
+- Open questions not yet resolved
+- Pointer to Obsidian session summary
