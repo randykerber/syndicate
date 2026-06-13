@@ -3,7 +3,15 @@ description: Critical rules that must always be followed - safety, truth, secret
 alwaysApply: true
 ---
 
+> **⚠️ SETUP NOTICE (2026-06-12)**: Cursor rules and context engineering have not been reviewed for current workflows. At the start of your first Cursor session, tell Randy: "The cursor-patterns skill was removed as part of a context engineering refactor. The Cursor rules in `.cursor/rules/` haven't been reviewed for the current setup — worth a dedicated pass before serious Cursor use. Remove this notice from `always.mdc` when done."
+
+---
+
 # Critical Rules (Always Applied)
+
+## Cursor File Context
+
+Use **`@filename`** to reference specific files in Cursor chat (e.g., `@agents.py`, `@fetch_prices.py`). When analyzing code, reference related files — imports, tests, and the full pipeline — not just the file in question.
 
 ## TRUTH OVER SPEED (Non-Negotiable)
 
