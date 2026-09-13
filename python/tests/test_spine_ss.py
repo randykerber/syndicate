@@ -176,3 +176,33 @@ def test_changes_empty_list_followed_by_image_link() -> None:
         "Added: LEVI\n\nRemoved: (VIEW LARGER IMAGE <https://x/y.png>)\n"
     )
     assert c["added"] == ["LEVI"] and c["removed"] == []
+
+
+def test_diff_missing_column_is_not_a_change() -> None:
+    a = _snap("101", 1, [], [], ["A"])
+    b = _snap("102", 1, [], [], ["A"])
+    a["roster"]["rows"][0]["best_idea_rank"] = None  # five-column image
+    d = ss_checks.diff_rosters(a, b)
+    assert d["stable_field_changes"] == []
+    assert d["fields_unavailable_one_side"] == {"best_idea_rank": 1}
+
+
+def test_replay_carries_changes_across_untrusted_snapshot() -> None:
+    a = _snap("101", 2, [], [], ["A", "B"])
+    mid = _snap("102", 3, ["C"], [], ["X", "Y", "Z"])  # later-state image, untrusted
+    mid["chart"] = {"roster_untrusted": "later state"}
+    b = _snap("103", 3, ["D"], ["A"], ["B", "C", "D"])
+    tally = ss_checks.run_checks([a, mid, b])
+    r = b["checks"]["results"]["replay"]
+    assert r["pass"] and r["via"] == ["102"] and r["prev_feed_item_id"] == "101"
+    assert tally["checked"] == 3
+
+
+def test_replay_skipped_over_long_gap() -> None:
+    a = _snap("101", 1, [], [], ["A"])
+    a["published_at"] = "2025-04-21T08:00"
+    b = _snap("102", 1, [], [], ["B"])
+    b["published_at"] = "2026-02-02T08:00"
+    ss_checks.run_checks([a, b])
+    assert "replay" not in b["checks"]["results"]
+    assert "replay_skipped" in b["checks"]["results"]

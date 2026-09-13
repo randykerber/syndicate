@@ -102,6 +102,15 @@ def load_overrides() -> dict[str, str]:
     return {str(k): str(v) for k, v in data.get("by_feed_item_id", {}).items()}
 
 
+def load_untrusted() -> dict[str, str]:
+    """feed_item_id -> reason, for charts whose replacement shows a later state."""
+    p = paths.CHART_OVERRIDES_SS
+    if not p.exists():
+        return {}
+    data = json.loads(p.read_text())
+    return {str(k): str(v) for k, v in data.get("roster_untrusted", {}).items()}
+
+
 def fetch_chart(url: str, dest: Path) -> dict[str, Any]:
     """Download once; a file already on disk is never re-fetched."""
     if dest.exists() and dest.stat().st_size > 0:
@@ -161,6 +170,7 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
     unkeyed_dir = paths.SNAPSHOTS_SS / "_unkeyed"
     unkeyed_dir.mkdir(exist_ok=True)
     overrides = load_overrides()
+    untrusted = load_untrusted()
     root = paths.RAW_MAIL
     summary: dict[str, Any] = {
         "messages": 0, "written": 0, "unkeyed": 0, "duplicates": 0,
@@ -206,6 +216,10 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
                 url = overrides[fid]
                 chart["override_url"] = url
                 summary["overrides_applied"] += 1
+            if fid in untrusted:
+                chart["roster_untrusted"] = untrusted[fid]
+                if "roster untrusted: later state" not in snap["exceptions"]:
+                    snap["exceptions"].append("roster untrusted: later state")
             local = paths.RAW_CHARTS_SS / f"{fid}__{Path(url).name}"
             chart["local_path"] = str(local)
             if fetch:
@@ -229,6 +243,12 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
 
 def _dump(obj: Any) -> str:
     return json.dumps(obj, indent=2, ensure_ascii=False, default=str) + "\n"
+
+
+def roster_trusted(snap: dict[str, Any]) -> bool:
+    return bool(snap.get("roster")) and not (snap.get("chart") or {}).get(
+        "roster_untrusted"
+    )
 
 
 def load_snapshots() -> list[dict[str, Any]]:

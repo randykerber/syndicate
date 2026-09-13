@@ -23,7 +23,29 @@ def roster_tickers(snap: dict[str, Any]) -> set[str] | None:
     return {r["ticker"].upper() for r in roster["rows"]}
 
 
-def check_snapshot(snap: dict[str, Any], prev: dict[str, Any] | None) -> dict[str, Any]:
+MAX_REPLAY_GAP_DAYS = 14
+
+
+def _days_between(a: str | None, b: str | None) -> float | None:
+    if not a or not b:
+        return None
+    from datetime import datetime
+
+    try:
+        return (
+            datetime.fromisoformat(b) - datetime.fromisoformat(a)
+        ).total_seconds() / 86400
+    except ValueError:
+        return None
+
+
+def check_snapshot(
+    snap: dict[str, Any],
+    prev: dict[str, Any] | None,
+    between: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """`between` = snapshots after `prev` and before `snap` whose rosters could not
+    serve as baseline (untrusted / missing); their stated changes still count."""
     sp = snap["subject_parsed"]
     ch = snap["changes"]
     tick = roster_tickers(snap)
@@ -53,17 +75,35 @@ def check_snapshot(snap: dict[str, Any], prev: dict[str, Any] | None) -> dict[st
     elif sp["added"] == 0 and sp["removed"] == 0:
         results["text_vs_subject"] = {"pass": True, "note": "no-change day, no lists"}
 
-    # 2 — replay previous roster through the stated changes
+    # 2 — replay previous roster through every stated change since it
     prev_tick = roster_tickers(prev) if prev else None
-    if tick is not None and prev_tick is not None:
+    gap = _days_between(
+        prev.get("published_at") if prev else None, snap.get("published_at")
+    )
+    if (
+        tick is not None
+        and prev_tick is not None
+        and gap is not None
+        and gap > MAX_REPLAY_GAP_DAYS
+    ):
+        results["replay_skipped"] = {
+            "reason": f"gap of {gap:.0f} days since previous trusted roster",
+            "prev_feed_item_id": prev["feed_item_id"],
+        }
+    elif tick is not None and prev_tick is not None:
+        expected = set(prev_tick)
+        for mid in (between or []) + [snap]:
+            mc = mid["changes"]
+            expected -= {t.upper() for t in (mc["removed"] or [])}
+            expected |= {t.upper() for t in (mc["added"] or [])}
         a = {t.upper() for t in (ch["added"] or [])}
         r = {t.upper() for t in (ch["removed"] or [])}
-        expected = (prev_tick - r) | a
         missing = sorted(expected - tick)  # expected but not in image
         extra = sorted(tick - expected)  # in image but not expected
         results["replay"] = {
             "pass": not missing and not extra,
             "prev_feed_item_id": prev["feed_item_id"],
+            "via": [m["feed_item_id"] for m in (between or [])],
             "expected_but_absent": missing,
             "present_but_unexpected": extra,
             "added_not_in_image": sorted(a - tick),
@@ -84,9 +124,10 @@ def check_snapshot(snap: dict[str, Any], prev: dict[str, Any] | None) -> dict[st
 def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
     """Snapshots must already be in publication order."""
     prev: dict[str, Any] | None = None
+    between: list[dict[str, Any]] = []
     tally = {"checked": 0, "all_pass": 0, "with_failures": []}
     for snap in snaps:
-        snap["checks"] = check_snapshot(snap, prev)
+        snap["checks"] = check_snapshot(snap, prev, between)
         tally["checked"] += 1
         if snap["checks"]["all_pass"]:
             tally["all_pass"] += 1
@@ -100,8 +141,11 @@ def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
                     ],
                 }
             )
-        if snap.get("roster"):
+        if snap.get("roster") and not (snap.get("chart") or {}).get("roster_untrusted"):
             prev = snap
+            between = []
+        else:
+            between.append(snap)
     return tally
 
 
@@ -112,9 +156,16 @@ def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     added = sorted(set(rb) - set(ra))
     removed = sorted(set(ra) - set(rb))
     field_changes: list[dict[str, Any]] = []
+    unavailable: dict[str, int] = {}
     for t in sorted(set(ra) & set(rb)):
         for f in STABLE_FIELDS:
             va, vb = ra[t].get(f), rb[t].get(f)
+            if va is None or vb is None:
+                # A column missing from one image (Apr-2026 charts carried only five
+                # columns) is "unavailable", not a change — never an alert.
+                if _norm(va) != _norm(vb):
+                    unavailable[f] = unavailable.get(f, 0) + 1
+                continue
             if _norm(va) != _norm(vb):
                 field_changes.append({"ticker": t, "field": f, "from": va, "to": vb})
     return {
@@ -131,6 +182,7 @@ def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         "stated_added": b["changes"].get("added"),
         "stated_removed": b["changes"].get("removed"),
         "stable_field_changes": field_changes,
+        "fields_unavailable_one_side": unavailable,
     }
 
 

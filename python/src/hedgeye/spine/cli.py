@@ -32,7 +32,8 @@ def _write_snapshot(snap: dict[str, Any]) -> None:
 
 
 def _latest_with_roster(snaps: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [s for s in snaps if s.get("roster")]
+    """Snapshots whose roster can stand for their date (untrusted ones excluded)."""
+    return [s for s in snaps if ss_extract.roster_trusted(s)]
 
 
 def cmd_extract(a: argparse.Namespace) -> int:
