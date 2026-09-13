@@ -205,8 +205,15 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
                     out.write_text(_dump(prev))
                 summary["duplicates"] += 1
                 continue
-            for k in ("roster", "roster_source", "checks"):
-                snap[k] = prev.get(k)
+            for k in (
+                "roster",
+                "roster_source",
+                "checks",
+                "roster_from_later_image",
+                "roster_from_later_image_source",
+            ):
+                if prev.get(k) is not None:
+                    snap[k] = prev.get(k)
             snap["exceptions"] = prev.get("exceptions", [])
 
         if snap["chart"] is not None:
@@ -246,9 +253,12 @@ def _dump(obj: Any) -> str:
 
 
 def roster_trusted(snap: dict[str, Any]) -> bool:
-    return bool(snap.get("roster")) and not (snap.get("chart") or {}).get(
-        "roster_untrusted"
-    )
+    """A roster that can stand for its date: a trusted image read, or a derivation."""
+    if not snap.get("roster"):
+        return False
+    if (snap.get("roster_source") or {}).get("kind") == "derived":
+        return True
+    return not (snap.get("chart") or {}).get("roster_untrusted")
 
 
 def load_snapshots() -> list[dict[str, Any]]:

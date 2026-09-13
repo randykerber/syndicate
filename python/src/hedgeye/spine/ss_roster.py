@@ -187,6 +187,30 @@ def merge_reads_from_dir(
         if snap.get("roster") and not force:
             skipped += 1
             continue
+        if (snap.get("chart") or {}).get("roster_untrusted"):
+            # the image is a later day's table: keep its reading aside, never as roster
+            try:
+                roster = Roster.model_validate(json.loads(f.read_text()))
+            except Exception as e:  # noqa: BLE001
+                invalid += 1
+                problems.append({"file": f.name, "problem": str(e)[:300]})
+                continue
+            snap["roster_from_later_image"] = {
+                "column_headers": roster.column_headers,
+                "row_count_reported": roster.row_count,
+                "rows": [r.model_dump() for r in roster.rows],
+                "notes": roster.notes,
+            }
+            snap["roster_from_later_image_source"] = {
+                "model": reader,
+                "read_file": str(f),
+            }
+            if (snap.get("roster_source") or {}).get("kind") != "derived":
+                snap["roster"] = None
+                snap["roster_source"] = None
+            write(snap)
+            skipped += 1
+            continue
         try:
             roster = Roster.model_validate(json.loads(f.read_text()))
         except Exception as e:  # noqa: BLE001 — report, never hide

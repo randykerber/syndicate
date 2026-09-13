@@ -252,3 +252,26 @@ def test_aliases_canonicalize_replay(tmp_path, monkeypatch) -> None:
         assert aliases.canon("uaa") == "UA"
     finally:
         aliases.reload()
+
+
+def test_derive_roster_from_ledger() -> None:
+    from hedgeye.spine import ss_derive
+
+    a = _snap("101", 2, [], [], ["A", "B"])
+    a["published_at"] = "2026-04-24T12:00"
+    mid = _snap("102", 3, ["C"], [], ["X", "Y", "Z"])  # later-state image
+    mid["published_at"] = "2026-04-27T09:00"
+    mid["chart"] = {"roster_untrusted": "later state"}
+    nxt = _snap("103", 3, [], [], ["A", "B", "C"])
+    nxt["published_at"] = "2026-04-27T11:00"
+    nxt["roster"]["rows"][2]["best_idea_rank"] = "KM Signal"
+    written = []
+    out = ss_derive.derive_rosters([a, mid, nxt], written.append)
+    assert out["derived"] == 1
+    rows = {r["ticker"]: r for r in mid["roster"]["rows"]}
+    assert set(rows) == {"A", "B", "C"}
+    assert rows["A"]["days_on"] == 3 and rows["A"]["best_idea_rank"] == "Bench"
+    assert rows["C"]["days_on"] == 0 and rows["C"]["best_idea_rank"] == "KM Signal"
+    assert mid["roster_source"]["kind"] == "derived"
+    assert mid["roster_from_later_image"]["rows"][0]["ticker"] == "X"
+    assert ss_extract.roster_trusted(mid)

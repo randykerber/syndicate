@@ -3,6 +3,7 @@
 extract ss            emails -> snapshots/ss/<feed_item_id>.json (+ chart PNGs)
 read-rosters          PNG -> roster rows via Sonnet 5 API, or --from-dir DIR to merge
                       files a Claude Code session/subagent read (subscription path)
+derive-rosters        rebuild rosters for days whose only image is a later day's table
 check                 three consistency witnesses per snapshot, written back
 load                  snapshots -> SQLite (~/d/prod/hedgeye/hedgeye.sqlite)
 status                the one bell: what's on disk, what's stale, what failed
@@ -73,6 +74,17 @@ def cmd_read_rosters(a: argparse.Namespace) -> int:
     print(_dump(summary))
     with db.connect() as con:
         db.record_run(con, "read-rosters", summary)
+    return 0
+
+
+def cmd_derive(a: argparse.Namespace) -> int:
+    from . import ss_derive
+
+    snaps = ss_extract.load_snapshots()
+    summary = ss_derive.derive_rosters(snaps, _write_snapshot, force=a.force)
+    print(_dump(summary))
+    with db.connect() as con:
+        db.record_run(con, "derive-rosters", summary)
     return 0
 
 
@@ -237,6 +249,9 @@ def main(argv: list[str] | None = None) -> int:
         help="provenance label for --from-dir",
     )
     s.set_defaults(fn=cmd_read_rosters)  # noqa: E702
+    s = sub.add_parser("derive-rosters")
+    s.add_argument("--force", action="store_true")
+    s.set_defaults(fn=cmd_derive)  # noqa: E702
     s = sub.add_parser("check")
     s.set_defaults(fn=cmd_check)  # noqa: E702
     s = sub.add_parser("load")

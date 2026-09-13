@@ -144,7 +144,10 @@ def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
                     ],
                 }
             )
-        if snap.get("roster") and not (snap.get("chart") or {}).get("roster_untrusted"):
+        derived = (snap.get("roster_source") or {}).get("kind") == "derived"
+        if snap.get("roster") and (
+            derived or not (snap.get("chart") or {}).get("roster_untrusted")
+        ):
             prev = snap
             between = []
         else:
