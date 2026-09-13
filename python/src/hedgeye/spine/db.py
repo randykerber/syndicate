@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from . import paths
-from .aliases import canon
+from .aliases import canon, kind
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS ss_roster_row (
     feed_item_id     TEXT NOT NULL,
     ticker           TEXT NOT NULL,             -- canonical (ticker-aliases.json)
     ticker_native    TEXT,                      -- as printed in the image
+    ticker_kind      TEXT,                      -- alias | correction | NULL
     days_on          INTEGER,
     signal_date      TEXT,
     entry_price      REAL,
@@ -108,9 +109,9 @@ def load_snapshots(
         if roster:
             for r in roster["rows"]:
                 con.execute(
-                    "INSERT OR REPLACE INTO ss_roster_row VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT OR REPLACE INTO ss_roster_row VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
-                        fid, canon(r["ticker"]), r["ticker"].upper(), r.get("days_on"), r.get("signal_date"),
+                        fid, canon(r["ticker"]), r["ticker"].upper(), kind(r["ticker"]), r.get("days_on"), r.get("signal_date"),
                         r.get("entry_price"), r.get("recent_price"),
                         r.get("pct_since_signal"), r.get("sector"), r.get("analyst"),
                         r.get("best_idea_rank"), r.get("rank_kind"),
@@ -128,7 +129,7 @@ def load_snapshots(
                         eid, ts, "ss-stocks", "RosterChange", canon(t),
                         s["source_path"], conf,
                         json.dumps({"action": action, "portfolio": "ss-stocks",
-                                    "feed_item_id": fid, "stated_by": "email-text", "ticker_native": t.upper()}),
+                                    "feed_item_id": fid, "stated_by": "email-text", "ticker_native": t.upper(), "ticker_kind": kind(t)}),
                     ),
                 )  # fmt: skip
                 n_events += 1

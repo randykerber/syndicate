@@ -238,7 +238,7 @@ def test_aliases_canonicalize_replay(tmp_path, monkeypatch) -> None:
     from hedgeye.spine import aliases, paths
 
     f = tmp_path / "ticker-aliases.json"
-    f.write_text('{"aliases": {"RC": "RCL"}}')
+    f.write_text('{"aliases": {"UAA": "UA"}, "corrections": {"RC": "RCL"}}')
     monkeypatch.setattr(paths, "TICKER_ALIASES", f)
     aliases.reload()
     try:
@@ -246,5 +246,9 @@ def test_aliases_canonicalize_replay(tmp_path, monkeypatch) -> None:
         b = _snap("102", 2, ["RC"], [], ["A", "RCL"])  # email typo, image correct
         ss_checks.run_checks([a, b])
         assert b["checks"]["results"]["replay"]["pass"]
+        assert aliases.kind("RC") == "correction"
+        assert aliases.kind("UAA") == "alias"
+        assert aliases.kind("RCL") is None
+        assert aliases.canon("uaa") == "UA"
     finally:
         aliases.reload()
