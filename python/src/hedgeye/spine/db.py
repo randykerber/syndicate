@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from . import paths
+from .aliases import canon
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
@@ -49,7 +50,8 @@ CREATE INDEX IF NOT EXISTS ix_ss_snapshot_pub ON ss_snapshot(published_at);
 
 CREATE TABLE IF NOT EXISTS ss_roster_row (
     feed_item_id     TEXT NOT NULL,
-    ticker           TEXT NOT NULL,
+    ticker           TEXT NOT NULL,             -- canonical (ticker-aliases.json)
+    ticker_native    TEXT,                      -- as printed in the image
     days_on          INTEGER,
     signal_date      TEXT,
     entry_price      REAL,
@@ -106,9 +108,9 @@ def load_snapshots(
         if roster:
             for r in roster["rows"]:
                 con.execute(
-                    "INSERT OR REPLACE INTO ss_roster_row VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT OR REPLACE INTO ss_roster_row VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
-                        fid, r["ticker"].upper(), r.get("days_on"), r.get("signal_date"),
+                        fid, canon(r["ticker"]), r["ticker"].upper(), r.get("days_on"), r.get("signal_date"),
                         r.get("entry_price"), r.get("recent_price"),
                         r.get("pct_since_signal"), r.get("sector"), r.get("analyst"),
                         r.get("best_idea_rank"), r.get("rank_kind"),
@@ -119,14 +121,14 @@ def load_snapshots(
         conf = ck.get("confidence")
         for action, key in (("add", "added"), ("remove", "removed")):
             for t in s["changes"].get(key) or []:
-                eid = f"ss-stocks:{fid}:RosterChange:{t.upper()}:{action}"
+                eid = f"ss-stocks:{fid}:RosterChange:{canon(t)}:{action}"
                 con.execute(
                     "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
                     (
-                        eid, ts, "ss-stocks", "RosterChange", t.upper(),
+                        eid, ts, "ss-stocks", "RosterChange", canon(t),
                         s["source_path"], conf,
                         json.dumps({"action": action, "portfolio": "ss-stocks",
-                                    "feed_item_id": fid, "stated_by": "email-text"}),
+                                    "feed_item_id": fid, "stated_by": "email-text", "ticker_native": t.upper()}),
                     ),
                 )  # fmt: skip
                 n_events += 1
@@ -154,7 +156,7 @@ def latest_snapshot_id(con: sqlite3.Connection) -> str | None:
 
 
 def ticker_history(con: sqlite3.Connection, ticker: str) -> dict[str, Any]:
-    t = ticker.upper()
+    t = canon(ticker)
     latest = latest_snapshot_id(con)
     now = None
     if latest:

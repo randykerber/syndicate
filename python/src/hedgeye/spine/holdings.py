@@ -16,6 +16,8 @@ from typing import Any
 
 from fin.ds.fid.parser import parse_fidelity_csv
 
+from .aliases import canon
+
 _CUSIP = re.compile(r"^[0-9]{3}[0-9A-Z]{5}[0-9]$")
 _FUND_WORDS = (
     " ETF", "ETF ", "ISHARES", "VANECK", "GLOBAL X", "CAMBRIA", "TEUCRIUM", "INVESCO",
@@ -133,7 +135,7 @@ def merge(holdings: list[Holding]) -> list[Holding]:
 def compare_to_roster(
     holdings: list[Holding], roster_rows: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    ss = {r["ticker"].upper(): r for r in roster_rows}
+    ss = {canon(r["ticker"]): r for r in roster_rows}
     held_in_ss, held_not_in_ss, non_stock = [], [], []
     for h in holdings:
         row = {"ticker": h.ticker, "class": h.asset_class, "value": round(h.value, 0),

@@ -232,3 +232,19 @@ def test_diff_significance_classes() -> None:
         ("B", "best_idea_rank"): "position",
         ("C", "entry_price"): "rounding",
     }
+
+
+def test_aliases_canonicalize_replay(tmp_path, monkeypatch) -> None:
+    from hedgeye.spine import aliases, paths
+
+    f = tmp_path / "ticker-aliases.json"
+    f.write_text('{"aliases": {"RC": "RCL"}}')
+    monkeypatch.setattr(paths, "TICKER_ALIASES", f)
+    aliases.reload()
+    try:
+        a = _snap("101", 1, [], [], ["A"])
+        b = _snap("102", 2, ["RC"], [], ["A", "RCL"])  # email typo, image correct
+        ss_checks.run_checks([a, b])
+        assert b["checks"]["results"]["replay"]["pass"]
+    finally:
+        aliases.reload()

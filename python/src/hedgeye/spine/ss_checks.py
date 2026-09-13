@@ -13,6 +13,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .aliases import canon, canon_set
+
 STABLE_FIELDS = ("signal_date", "entry_price", "sector", "analyst", "best_idea_rank")
 VOLATILE_FIELDS = ("days_on", "recent_price", "pct_since_signal")
 
@@ -21,7 +23,7 @@ def roster_tickers(snap: dict[str, Any]) -> set[str] | None:
     roster = snap.get("roster")
     if not roster:
         return None
-    return {r["ticker"].upper() for r in roster["rows"]}
+    return {canon(r["ticker"]) for r in roster["rows"]}
 
 
 MAX_REPLAY_GAP_DAYS = 14
@@ -95,10 +97,10 @@ def check_snapshot(
         expected = set(prev_tick)
         for mid in (between or []) + [snap]:
             mc = mid["changes"]
-            expected -= {t.upper() for t in (mc["removed"] or [])}
-            expected |= {t.upper() for t in (mc["added"] or [])}
-        a = {t.upper() for t in (ch["added"] or [])}
-        r = {t.upper() for t in (ch["removed"] or [])}
+            expected -= canon_set(mc["removed"])
+            expected |= canon_set(mc["added"])
+        a = canon_set(ch["added"])
+        r = canon_set(ch["removed"])
         missing = sorted(expected - tick)  # expected but not in image
         extra = sorted(tick - expected)  # in image but not expected
         results["replay"] = {
@@ -152,8 +154,8 @@ def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
 
 def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     """Roster and stable-field changes from snapshot `a` to snapshot `b`."""
-    ra = {r["ticker"].upper(): r for r in (a.get("roster") or {}).get("rows", [])}
-    rb = {r["ticker"].upper(): r for r in (b.get("roster") or {}).get("rows", [])}
+    ra = {canon(r["ticker"]): r for r in (a.get("roster") or {}).get("rows", [])}
+    rb = {canon(r["ticker"]): r for r in (b.get("roster") or {}).get("rows", [])}
     added = sorted(set(rb) - set(ra))
     removed = sorted(set(ra) - set(rb))
     field_changes: list[dict[str, Any]] = []

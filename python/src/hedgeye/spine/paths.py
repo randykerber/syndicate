@@ -15,6 +15,7 @@ PROD = D / "prod" / "hedgeye"
 SNAPSHOTS_SS = PROD / "snapshots" / "ss"
 DB_PATH = PROD / "hedgeye.sqlite"
 RUNS_LOG = PROD / "runs.jsonl"
+TICKER_ALIASES = PROD / "ticker-aliases.json"
 
 FIN_VAULT = HOME / "local" / "obsidian" / "Fin"
 GEN_DIR = FIN_VAULT / "Areas" / "Hedgeye" / "gen"
