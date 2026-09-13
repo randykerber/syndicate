@@ -10,6 +10,7 @@ applicable checks that passed; a snapshot with no prior is checked on 1 and 3 on
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 STABLE_FIELDS = ("signal_date", "entry_price", "sector", "analyst", "best_idea_rank")
@@ -167,7 +168,9 @@ def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
                     unavailable[f] = unavailable.get(f, 0) + 1
                 continue
             if _norm(va) != _norm(vb):
-                field_changes.append({"ticker": t, "field": f, "from": va, "to": vb})
+                change = {"ticker": t, "field": f, "from": va, "to": vb}
+                change["significance"] = _significance(f, va, vb)
+                field_changes.append(change)
     return {
         "from": {
             "feed_item_id": a["feed_item_id"],
@@ -184,6 +187,36 @@ def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         "stable_field_changes": field_changes,
         "fields_unavailable_one_side": unavailable,
     }
+
+
+_RANK = re.compile(r"^\s*(\d+)\s*(?:/|of)\s*(\d+)\s*$")
+
+
+def _significance(field: str, va: Any, vb: Any) -> str:
+    """What kind of change this is — so an alert can ignore the noise.
+
+    - best_idea_rank: `kind` (Bench <-> ranked <-> KM Signal) · `position` (numerator
+      moved) · `denominator` (the analyst's list grew or shrank; the stock did not move)
+    - entry_price: `rounding` when equal at one decimal (some images print one decimal)
+    - everything else: `value`
+    """
+    if field == "best_idea_rank":
+        from .ss_roster import rank_kind
+
+        ka, kb = rank_kind(va), rank_kind(vb)
+        if ka != kb:
+            return "kind"
+        pa, pb = _RANK.match(str(va)), _RANK.match(str(vb))
+        if pa and pb:
+            return "position" if pa.group(1) != pb.group(1) else "denominator"
+        return "value"
+    if (
+        field == "entry_price"
+        and isinstance(va, (int, float))
+        and isinstance(vb, (int, float))
+    ):
+        return "rounding" if round(va, 1) == round(vb, 1) else "value"
+    return "value"
 
 
 def _norm(v: Any) -> Any:

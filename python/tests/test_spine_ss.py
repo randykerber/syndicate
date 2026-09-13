@@ -124,7 +124,13 @@ def test_diff_stable_fields() -> None:
     b["roster"]["rows"][0]["days_on"] = 99  # volatile, must not count
     d = ss_checks.diff_rosters(a, b)
     assert d["stable_field_changes"] == [
-        {"ticker": "A", "field": "best_idea_rank", "from": "Bench", "to": "3/6"}
+        {
+            "ticker": "A",
+            "field": "best_idea_rank",
+            "from": "Bench",
+            "to": "3/6",
+            "significance": "kind",
+        }
     ]
 
 
@@ -206,3 +212,23 @@ def test_replay_skipped_over_long_gap() -> None:
     ss_checks.run_checks([a, b])
     assert "replay" not in b["checks"]["results"]
     assert "replay_skipped" in b["checks"]["results"]
+
+
+def test_diff_significance_classes() -> None:
+    a = _snap("101", 3, [], [], ["A", "B", "C"])
+    b = _snap("102", 3, [], [], ["A", "B", "C"])
+    a["roster"]["rows"][0]["best_idea_rank"] = "4/4"
+    b["roster"]["rows"][0]["best_idea_rank"] = "4/5"  # denominator only
+    a["roster"]["rows"][1]["best_idea_rank"] = "3/6"
+    b["roster"]["rows"][1]["best_idea_rank"] = "1/6"  # position
+    a["roster"]["rows"][2]["entry_price"] = 23.44
+    b["roster"]["rows"][2]["entry_price"] = 23.4  # rounding
+    sig = {
+        (c["ticker"], c["field"]): c["significance"]
+        for c in ss_checks.diff_rosters(a, b)["stable_field_changes"]
+    }
+    assert sig == {
+        ("A", "best_idea_rank"): "denominator",
+        ("B", "best_idea_rank"): "position",
+        ("C", "entry_price"): "rounding",
+    }

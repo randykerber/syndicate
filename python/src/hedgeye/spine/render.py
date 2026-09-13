@@ -54,11 +54,21 @@ def render_ss_page(
         L.append(
             f"- Removed: {', '.join(r['ticker'] for r in diff['removed']) or '—'}\n"
         )
-        fc = diff["stable_field_changes"]
-        L.append(f"- Stable-field changes: {len(fc)}\n")
+        fc = [
+            c
+            for c in diff["stable_field_changes"]
+            if c.get("significance") not in ("denominator", "rounding")
+        ]
+        noise = len(diff["stable_field_changes"]) - len(fc)
+        L.append(
+            f"- Stable-field changes: {len(fc)}"
+            + (f" (+{noise} denominator/rounding-only, not shown)" if noise else "")
+            + "\n"
+        )
         for c in fc:
             L.append(
-                f"  - **{c['ticker']}** {c['field']}: `{c['from']}` → `{c['to']}`\n"
+                f"  - **{c['ticker']}** {c['field']}: `{c['from']}` → `{c['to']}` "
+                f"({c.get('significance')})\n"
             )
 
     if holdings_cmp:
