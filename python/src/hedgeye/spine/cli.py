@@ -1,7 +1,8 @@
 """`spine` — the hand-run commands. Every one is safe to rerun.
 
 extract ss            emails -> snapshots/ss/<feed_item_id>.json (+ chart PNGs)
-read-rosters          PNG -> roster rows via Sonnet 5 (only where missing; --force)
+read-rosters          PNG -> roster rows via Sonnet 5 API, or --from-dir DIR to merge
+                      files a Claude Code session/subagent read (subscription path)
 check                 three consistency witnesses per snapshot, written back
 load                  snapshots -> SQLite (~/d/prod/hedgeye/hedgeye.sqlite)
 status                the one bell: what's on disk, what's stale, what failed
@@ -47,6 +48,18 @@ def cmd_extract(a: argparse.Namespace) -> int:
 
 def cmd_read_rosters(a: argparse.Namespace) -> int:
     snaps = ss_extract.load_snapshots()
+    if a.from_dir:
+        summary = ss_roster.merge_reads_from_dir(
+            snaps,
+            Path(a.from_dir).expanduser(),
+            _write_snapshot,
+            reader=a.reader,
+            force=a.force,
+        )
+        print(_dump(summary))
+        with db.connect() as con:
+            db.record_run(con, "read-rosters --from-dir", summary)
+        return 0
     if a.feed_item_id:
         snaps = [s for s in snaps if s["feed_item_id"] in a.feed_item_id]
     if a.latest:
@@ -212,6 +225,16 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--limit", type=int)
     s.add_argument("--latest", type=int, help="only the N most recent with images")
     s.add_argument("--feed-item-id", nargs="*")
+    s.add_argument(
+        "--from-dir",
+        help="merge <feed_item_id>.json roster files read by a CC session/subagent "
+        "instead of calling the API",
+    )
+    s.add_argument(
+        "--reader",
+        default="claude-code-session",
+        help="provenance label for --from-dir",
+    )
     s.set_defaults(fn=cmd_read_rosters)  # noqa: E702
     s = sub.add_parser("check")
     s.set_defaults(fn=cmd_check)  # noqa: E702

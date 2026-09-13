@@ -160,5 +160,60 @@ def read_rosters(
     return {"read": done, "skipped": skipped, "failed": failed}
 
 
+def merge_reads_from_dir(
+    snapshots: list[dict[str, Any]],
+    read_dir: Path,
+    write: "callable[[dict[str, Any]], None]",
+    reader: str,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Fold hand- or agent-produced roster files into snapshots.
+
+    Each `<feed_item_id>.json` in `read_dir` must satisfy the `Roster` schema (the same
+    one the API path uses); it is validated, tagged with `reader` as provenance, and
+    written into the matching snapshot. This is the subscription path: a Claude Code
+    session or subagent reads the PNG with its own vision and writes the file.
+    """
+    by_id = {s["feed_item_id"]: s for s in snapshots}
+    merged = skipped = invalid = unmatched = 0
+    problems: list[dict[str, Any]] = []
+    for f in sorted(read_dir.glob("*.json")):
+        fid = f.stem
+        snap = by_id.get(fid)
+        if snap is None:
+            unmatched += 1
+            problems.append({"file": f.name, "problem": "no snapshot with that id"})
+            continue
+        if snap.get("roster") and not force:
+            skipped += 1
+            continue
+        try:
+            roster = Roster.model_validate(json.loads(f.read_text()))
+        except Exception as e:  # noqa: BLE001 — report, never hide
+            invalid += 1
+            problems.append({"file": f.name, "problem": str(e)[:300]})
+            continue
+        rows = [r.model_dump() for r in roster.rows]
+        for r in rows:
+            r["rank_kind"] = rank_kind(r["best_idea_rank"])
+        snap["roster"] = {
+            "column_headers": roster.column_headers,
+            "row_count_reported": roster.row_count,
+            "rows": rows,
+            "notes": roster.notes,
+        }
+        snap["roster_source"] = {
+            "model": reader,
+            "prompt_version": "cc-vision-read-v1",
+            "image": (snap.get("chart") or {}).get("local_path"),
+            "read_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "read_file": str(f),
+        }
+        write(snap)
+        merged += 1
+    return {"merged": merged, "skipped_has_roster": skipped, "invalid": invalid,
+            "unmatched": unmatched, "problems": problems}  # fmt: skip
+
+
 def dump_json(obj: Any) -> str:
     return json.dumps(obj, indent=2, ensure_ascii=False, default=str) + "\n"
