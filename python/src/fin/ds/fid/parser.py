@@ -50,6 +50,15 @@ def _clean_symbol(symbol: str) -> str:
     return symbol.strip().rstrip("*")
 
 
+def _g(row: dict, key: str) -> str:
+    """Case-insensitive column lookup — Fidelity changed header casing between the
+    Mar-2026 export ("Current Value") and Sep-2026 ("Current value")."""
+    for k, v in row.items():
+        if k and k.strip().lower() == key.lower():
+            return v or ""
+    return ""
+
+
 def _is_option_symbol(symbol: str) -> bool:
     """Detect option symbols like ' -IWM260618C305'."""
     return bool(re.match(r"\s*-?\w+\d{6}[CP]\d+", symbol.strip()))
@@ -81,7 +90,7 @@ def parse_fidelity_csv(
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            symbol_raw = row.get("Symbol") or ""
+            symbol_raw = _g(row, "Symbol") or ""
             symbol_raw = symbol_raw.strip()
             if not symbol_raw:
                 continue
@@ -94,22 +103,22 @@ def parse_fidelity_csv(
             if symbol in ignore_symbols:
                 continue
 
-            description = row.get("Description", "").strip()
-            current_value = _parse_dollar(row.get("Current Value", ""))
+            description = _g(row, "Description").strip()
+            current_value = _parse_dollar(_g(row, "Current Value"))
             if current_value is None:
                 # Skip rows with no value (e.g., $0 delisted positions)
                 continue
 
-            quantity_str = row.get("Quantity", "").strip().replace(",", "")
+            quantity_str = _g(row, "Quantity").strip().replace(",", "")
             try:
                 quantity = float(quantity_str) if quantity_str else 0.0
             except ValueError:
                 quantity = 0.0
 
-            last_price = _parse_dollar(row.get("Last Price", ""))
-            total_gl = _parse_dollar(row.get("Total Gain/Loss Dollar", ""))
-            cost_basis = _parse_dollar(row.get("Cost Basis Total", ""))
-            pos_type = row.get("Type", "").strip().rstrip(",")
+            last_price = _parse_dollar(_g(row, "Last Price"))
+            total_gl = _parse_dollar(_g(row, "Total Gain/Loss Dollar"))
+            cost_basis = _parse_dollar(_g(row, "Cost Basis Total"))
+            pos_type = _g(row, "Type").strip().rstrip(",")
 
             # Aggregate by symbol across accounts
             if symbol in raw:
