@@ -38,13 +38,25 @@ def _latest_with_roster(snaps: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def cmd_extract(a: argparse.Namespace) -> int:
-    if a.stream != "ss":
-        print(f"unknown stream {a.stream!r}; only 'ss' in this slice", file=sys.stderr)
+    from . import streams
+
+    if a.stream == "ss":
+        summary: Any = ss_extract.extract(fetch=not a.no_fetch)
+    elif a.stream == "all":
+        summary = [ss_extract.extract(fetch=not a.no_fetch)] + [
+            streams.extract(s) for s in streams.STREAMS
+        ]
+    elif a.stream in streams.STREAMS:
+        summary = streams.extract(a.stream)
+    else:
+        print(
+            f"unknown stream {a.stream!r}; known: ss, all, {', '.join(streams.STREAMS)}",
+            file=sys.stderr,
+        )
         return 2
-    summary = ss_extract.extract(fetch=not a.no_fetch)
     print(_dump(summary))
     with db.connect() as con:
-        db.record_run(con, "extract ss", summary)
+        db.record_run(con, f"extract {a.stream}", summary)
     return 0
 
 
@@ -99,10 +111,46 @@ def cmd_check(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_check_etf(a: argparse.Namespace) -> int:
+    from . import etf_checks, streams
+
+    ps = streams.load_snapshots("ps-daily")
+    ch = streams.load_snapshots("ep-changes")
+    wk = streams.load_snapshots("ep-weekly")
+    a10 = streams.load_snapshots("any10")
+    out = {
+        "ep_weekly": etf_checks.check_ep_weekly(wk, ch),
+        "ps": etf_checks.check_ps(ps, wk, ch),
+        "any10": etf_checks.check_any10(a10, ps),
+    }
+    for stream, snaps in (("ps-daily", ps), ("ep-weekly", wk), ("any10", a10)):
+        for s in snaps:
+            streams.snapshot_path(stream, s["feed_item_id"]).write_text(
+                streams._dump(s)
+            )
+    print(_dump(out))
+    with db.connect() as con:
+        db.record_run(
+            con,
+            "check-etf",
+            {
+                k: {kk: vv for kk, vv in v.items() if kk != "failures"}
+                for k, v in out.items()
+            },
+        )
+    return 0
+
+
 def cmd_load(a: argparse.Namespace) -> int:
+    from . import streams
+
     snaps = ss_extract.load_snapshots()
     with db.connect() as con:
-        summary = db.load_snapshots(snaps, con)
+        summary: Any = {"ss-stocks": db.load_snapshots(snaps, con)}
+        for stream in streams.STREAMS:
+            summary[stream] = db.load_stream(
+                stream, streams.load_snapshots(stream), con
+            )
         db.record_run(con, "load", summary)
     print(_dump(summary))
     return 0
@@ -166,7 +214,9 @@ def cmd_diff(a: argparse.Namespace) -> int:
 def cmd_query(a: argparse.Namespace) -> int:
     with db.connect() as con:
         for t in a.ticker:
-            print(_dump(db.ticker_history(con, t)))
+            out = db.ticker_history(con, t)
+            out["etf_books"] = db.ticker_books(con, t)
+            print(_dump(out))
     return 0
 
 
@@ -201,6 +251,27 @@ def cmd_holdings(a: argparse.Namespace) -> int:
         p = paths.PROD / "holdings_vs_ss.json"
         p.write_text(_dump(out) + "\n")
         print(f"saved {p}", file=sys.stderr)
+    return 0
+
+
+def cmd_render_etf(a: argparse.Namespace) -> int:
+    from . import render_etf, streams
+
+    ps = streams.load_snapshots("ps-daily")
+    wk = streams.load_snapshots("ep-weekly")
+    ch = streams.load_snapshots("ep-changes")
+    a10 = streams.load_snapshots("any10")
+    hs = meta = None
+    if a.fidelity:
+        hs, meta = _holdings(
+            Path(a.fidelity).expanduser(), Path(a.ibkr).expanduser() if a.ibkr else None
+        )
+    text, report = render_etf.render(ps, wk, ch, a10, hs, meta)
+    out = paths.GEN_DIR / "ETF Books.md"
+    paths.GEN_DIR.mkdir(parents=True, exist_ok=True)
+    out.write_text(text)
+    (paths.PROD / "s31_ps_vs_ep.json").write_text(_dump(report) + "\n")
+    print(out)
     return 0
 
 
@@ -252,6 +323,8 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("derive-rosters")
     s.add_argument("--force", action="store_true")
     s.set_defaults(fn=cmd_derive)  # noqa: E702
+    s = sub.add_parser("check-etf")
+    s.set_defaults(fn=cmd_check_etf)  # noqa: E702
     s = sub.add_parser("check")
     s.set_defaults(fn=cmd_check)  # noqa: E702
     s = sub.add_parser("load")
@@ -271,6 +344,10 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--classes", action="store_true", help="just list asset classes")
     s.add_argument("--save", action="store_true")
     s.set_defaults(fn=cmd_holdings)  # noqa: E702
+    s = sub.add_parser("render-etf")
+    s.add_argument("--fidelity")
+    s.add_argument("--ibkr")
+    s.set_defaults(fn=cmd_render_etf)  # noqa: E702
     s = sub.add_parser("render")
     s.add_argument("--fidelity")
     s.add_argument("--ibkr")

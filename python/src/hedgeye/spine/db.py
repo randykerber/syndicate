@@ -66,6 +66,32 @@ CREATE TABLE IF NOT EXISTS ss_roster_row (
 );
 CREATE INDEX IF NOT EXISTS ix_ss_roster_ticker ON ss_roster_row(ticker, feed_item_id);
 
+CREATE TABLE IF NOT EXISTS roster_row (
+    stream         TEXT NOT NULL,
+    feed_item_id   TEXT NOT NULL,
+    published_at   TEXT,
+    ticker         TEXT NOT NULL,             -- canonical
+    ticker_native  TEXT,
+    side           TEXT NOT NULL,             -- long | short
+    rank           INTEGER,
+    payload        TEXT NOT NULL CHECK (json_valid(payload)),
+    PRIMARY KEY (stream, feed_item_id, ticker, side)
+);
+CREATE INDEX IF NOT EXISTS ix_roster_row_ticker ON roster_row(ticker, stream, published_at);
+CREATE INDEX IF NOT EXISTS ix_roster_row_pub ON roster_row(stream, published_at);
+
+CREATE TABLE IF NOT EXISTS stream_snapshot (
+    stream         TEXT NOT NULL,
+    feed_item_id   TEXT NOT NULL,
+    published_at   TEXT,
+    subject        TEXT,
+    n_rows         INTEGER,
+    checks_pass    INTEGER,                   -- 1 all pass, 0 a failure, NULL none applicable
+    exceptions     TEXT,
+    payload        TEXT NOT NULL CHECK (json_valid(payload)),
+    PRIMARY KEY (stream, feed_item_id)
+);
+
 CREATE TABLE IF NOT EXISTS runs (
     ran_at   TEXT NOT NULL,
     command  TEXT NOT NULL,
@@ -185,3 +211,110 @@ def ticker_history(con: sqlite3.Connection, ticker: str) -> dict[str, Any]:
         "events": [dict(e) for e in events],
         "presence": dict(presence) if presence else None,
     }
+
+
+def load_stream(
+    stream: str, snaps: list[dict[str, Any]], con: sqlite3.Connection
+) -> dict[str, Any]:
+    """ETF streams -> stream_snapshot + roster_row + events (PortfolioTransaction /
+    RosterChange from the publisher's own text). Idempotent per feed_item_id."""
+    n_rows = n_events = 0
+    con.execute("DELETE FROM roster_row WHERE stream = ?", (stream,))
+    con.execute("DELETE FROM events WHERE stream = ?", (stream,))
+    for s in snaps:
+        fid, ts = s["feed_item_id"], s.get("published_at") or s.get("arrived_at")
+        ck = s.get("checks") or {}
+        passes = [
+            v.get("pass")
+            for v in ck.values()
+            if isinstance(v, dict)
+            and v.get("pass") is not None
+            and not v.get("pass_with_lag1")
+        ]
+        rows: list[tuple[str, str, dict[str, Any]]] = []
+        if stream in ("ps-daily", "any10"):
+            rows = [("long", r["ticker"], r) for r in s.get("roster", [])]
+        elif stream == "ep-weekly":
+            rows = [("long", r["ticker"], r) for r in s.get("long", [])] + [
+                ("short", r["ticker"], r) for r in s.get("short", [])
+            ]
+        for side, t, r in rows:
+            con.execute(
+                "INSERT OR REPLACE INTO roster_row VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    stream,
+                    fid,
+                    ts,
+                    canon(t),
+                    t.upper(),
+                    side,
+                    r.get("rank"),
+                    json.dumps(r, default=str),
+                ),
+            )
+            n_rows += 1
+        if stream == "ps-daily":
+            for i, t in enumerate(s.get("transactions", [])):
+                eid = f"ps-daily:{fid}:PortfolioTransaction:{canon(t['ticker'])}:{i}"
+                con.execute(
+                    "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
+                    (eid, ts, stream, "PortfolioTransaction", canon(t["ticker"]), s["source_path"], None,
+                     json.dumps({"action": t["action"], "bps": t["bps"], "portfolio": "ps", "feed_item_id": fid,
+                                 "ticker_native": t["ticker"].upper(), "sentence": t["sentence"]})),
+                )  # fmt: skip
+                n_events += 1
+        elif stream in ("ep-changes", "any10"):
+            portfolio = "etf-pro" if stream == "ep-changes" else "any10"
+            for i, c in enumerate(s.get("changes", [])):
+                eid = f"{stream}:{fid}:RosterChange:{canon(c['ticker'])}:{c['action']}:{i}"
+                con.execute(
+                    "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
+                    (eid, ts, stream, "RosterChange", canon(c["ticker"]), s["source_path"], None,
+                     json.dumps({"action": c["action"], "side": c.get("side"), "portfolio": portfolio,
+                                 "feed_item_id": fid, "ticker_native": c["ticker"].upper(),
+                                 "name": c.get("name"), "range": c.get("range")})),
+                )  # fmt: skip
+                n_events += 1
+        con.execute(
+            "INSERT OR REPLACE INTO stream_snapshot VALUES (?,?,?,?,?,?,?,?)",
+            (stream, fid, ts, s.get("subject"), len(rows),
+             None if not passes else int(all(passes)), json.dumps(s.get("exceptions", [])),
+             json.dumps(s, default=str)),
+        )  # fmt: skip
+    con.commit()
+    return {
+        "stream": stream,
+        "snapshots": len(snaps),
+        "roster_rows": n_rows,
+        "events": n_events,
+    }
+
+
+def ticker_books(con: sqlite3.Connection, ticker: str) -> dict[str, Any]:
+    """Current membership + history of a ticker across the ETF books."""
+    t = canon(ticker)
+    out: dict[str, Any] = {"ticker": t}
+    for stream in ("ps-daily", "ep-weekly", "any10"):
+        latest = con.execute(
+            "SELECT feed_item_id, published_at FROM stream_snapshot WHERE stream=? AND n_rows>0 "
+            "ORDER BY published_at DESC LIMIT 1", (stream,)).fetchone()  # fmt: skip
+        if not latest:
+            continue
+        row = con.execute(
+            "SELECT side, rank, payload FROM roster_row WHERE stream=? AND feed_item_id=? AND ticker=?",
+            (stream, latest[0], t)).fetchone()  # fmt: skip
+        pres = con.execute(
+            "SELECT MIN(published_at), MAX(published_at), COUNT(*) FROM roster_row WHERE stream=? AND ticker=?",
+            (stream, t)).fetchone()  # fmt: skip
+        out[stream] = {
+            "as_of": latest[1],
+            "in": row is not None,
+            "side": row[0] if row else None,
+            "rank": row[1] if row else None,
+            "detail": json.loads(row[2]) if row else None,
+            "first_seen": pres[0], "last_seen": pres[1], "snapshots": pres[2],
+        }  # fmt: skip
+    out["events"] = [dict(r) for r in con.execute(
+        "SELECT ts, stream, event_type, payload->>'$.action' AS action, payload->>'$.side' AS side, "
+        "payload->>'$.bps' AS bps FROM events WHERE instrument=? AND stream != 'ss-stocks' ORDER BY ts", (t,))]  # fmt: skip
+    return out
