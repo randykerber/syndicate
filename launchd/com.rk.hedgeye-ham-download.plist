@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Hedgeye HAM ETF holdings download. Decision rough-design-draft §4-5 (2026-09-11):
+       the one unrecoverable-if-missed step (Hedgeye overwrites one S3 file daily).
+       Weekdays 06:45 MT + 07:30 retry; the script is idempotent ("No change" if already have it).
+       Log: ~/d/logs/ham-download.log. Installed 2026-09-14 (Hedgeye Build s1). -->
+  <key>Label</key><string>com.rk.hedgeye-ham-download</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/uv</string>
+    <string>run</string>
+    <string>--directory</string>
+    <string>/Users/rk/gh/randykerber/syndicate/python</string>
+    <string>python</string>
+    <string>scripts/hedgeye/download_ham_etf_holdings.py</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>1</integer></dict>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>2</integer></dict>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>3</integer></dict>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>4</integer></dict>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>5</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer><key>Weekday</key><integer>1</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer><key>Weekday</key><integer>2</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer><key>Weekday</key><integer>3</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer><key>Weekday</key><integer>4</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer><key>Weekday</key><integer>5</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/Users/rk/d/logs/ham-download.log</string>
+  <key>StandardErrorPath</key><string>/Users/rk/d/logs/ham-download.log</string>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/opt/homebrew/bin:/Users/rk/.local/bin:/usr/local/bin:/usr/bin:/bin</string></dict>
+</dict>
+</plist>
