@@ -137,7 +137,7 @@ def load_snapshots(
                 con.execute(
                     "INSERT OR REPLACE INTO ss_roster_row VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
-                        fid, canon(r["ticker"]), r["ticker"].upper(), kind(r["ticker"]), r.get("days_on"), r.get("signal_date"),
+                        fid, canon(r["ticker"], ts), r["ticker"].upper(), kind(r["ticker"], ts), r.get("days_on"), r.get("signal_date"),
                         r.get("entry_price"), r.get("recent_price"),
                         r.get("pct_since_signal"), r.get("sector"), r.get("analyst"),
                         r.get("best_idea_rank"), r.get("rank_kind"),
@@ -148,14 +148,14 @@ def load_snapshots(
         conf = ck.get("confidence")
         for action, key in (("add", "added"), ("remove", "removed")):
             for t in s["changes"].get(key) or []:
-                eid = f"ss-stocks:{fid}:RosterChange:{canon(t)}:{action}"
+                eid = f"ss-stocks:{fid}:RosterChange:{canon(t, ts)}:{action}"
                 con.execute(
                     "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
                     (
-                        eid, ts, "ss-stocks", "RosterChange", canon(t),
+                        eid, ts, "ss-stocks", "RosterChange", canon(t, ts),
                         s["source_path"], conf,
                         json.dumps({"action": action, "portfolio": "ss-stocks",
-                                    "feed_item_id": fid, "stated_by": "email-text", "ticker_native": t.upper(), "ticker_kind": kind(t)}),
+                                    "feed_item_id": fid, "stated_by": "email-text", "ticker_native": t.upper(), "ticker_kind": kind(t, ts)}),
                     ),
                 )  # fmt: skip
                 n_events += 1
@@ -245,7 +245,7 @@ def load_stream(
                     stream,
                     fid,
                     ts,
-                    canon(t),
+                    canon(t, ts),
                     t.upper(),
                     side,
                     r.get("rank"),
@@ -255,10 +255,12 @@ def load_stream(
             n_rows += 1
         if stream == "ps-daily":
             for i, t in enumerate(s.get("transactions", [])):
-                eid = f"ps-daily:{fid}:PortfolioTransaction:{canon(t['ticker'])}:{i}"
+                eid = (
+                    f"ps-daily:{fid}:PortfolioTransaction:{canon(t['ticker'], ts)}:{i}"
+                )
                 con.execute(
                     "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
-                    (eid, ts, stream, "PortfolioTransaction", canon(t["ticker"]), s["source_path"], None,
+                    (eid, ts, stream, "PortfolioTransaction", canon(t["ticker"], ts), s["source_path"], None,
                      json.dumps({"action": t["action"], "bps": t["bps"], "portfolio": "ps", "feed_item_id": fid,
                                  "ticker_native": t["ticker"].upper(), "sentence": t["sentence"]})),
                 )  # fmt: skip
@@ -266,10 +268,10 @@ def load_stream(
         elif stream in ("ep-changes", "any10"):
             portfolio = "etf-pro" if stream == "ep-changes" else "any10"
             for i, c in enumerate(s.get("changes", [])):
-                eid = f"{stream}:{fid}:RosterChange:{canon(c['ticker'])}:{c['action']}:{i}"
+                eid = f"{stream}:{fid}:RosterChange:{canon(c['ticker'], ts)}:{c['action']}:{i}"
                 con.execute(
                     "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?)",
-                    (eid, ts, stream, "RosterChange", canon(c["ticker"]), s["source_path"], None,
+                    (eid, ts, stream, "RosterChange", canon(c["ticker"], ts), s["source_path"], None,
                      json.dumps({"action": c["action"], "side": c.get("side"), "portfolio": portfolio,
                                  "feed_item_id": fid, "ticker_native": c["ticker"].upper(),
                                  "name": c.get("name"), "range": c.get("range")})),

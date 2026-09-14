@@ -21,7 +21,10 @@ CARRY = ("signal_date", "entry_price", "sector", "analyst", "best_idea_rank")
 
 
 def _rows_by_ticker(snap: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return {canon(r["ticker"]): r for r in (snap.get("roster") or {}).get("rows", [])}
+    at = snap.get("published_at")
+    return {
+        canon(r["ticker"], at): r for r in (snap.get("roster") or {}).get("rows", [])
+    }
 
 
 def derive_one(
@@ -36,8 +39,12 @@ def derive_one(
         return None
     members = set(_rows_by_ticker(prev))
     for mid in between + [snap]:
-        members -= {canon(t) for t in (mid["changes"]["removed"] or [])}
-        members |= {canon(t) for t in (mid["changes"]["added"] or [])}
+        members -= {
+            canon(t, mid.get("published_at")) for t in (mid["changes"]["removed"] or [])
+        }
+        members |= {
+            canon(t, mid.get("published_at")) for t in (mid["changes"]["added"] or [])
+        }
     prev_rows = _rows_by_ticker(prev)
     day_delta = int(round(gap))
     rows: list[dict[str, Any]] = []

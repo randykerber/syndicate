@@ -51,10 +51,14 @@ def ep_anchors(weekly: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def apply_changes(
-    long: set[str], short: set[str], changes: list[dict[str, Any]], notes: list[str]
+    long: set[str],
+    short: set[str],
+    changes: list[dict[str, Any]],
+    notes: list[str],
+    at: str | None = None,
 ) -> None:
     for c in changes:
-        t = canon(c["ticker"])
+        t = canon(c["ticker"], at)
         side = c.get("side")
         if c["action"] == "add":
             side = side or "long"
@@ -86,12 +90,12 @@ def ep_state_at(
     a_ts = _ts(anchor)
     if (when - a_ts).days > MAX_ANCHOR_GAP_DAYS:
         return None
-    long = {canon(r["ticker"]) for r in anchor["long"]}
-    short = {canon(r["ticker"]) for r in anchor["short"]}
+    long = {canon(r["ticker"], anchor.get("published_at")) for r in anchor["long"]}
+    short = {canon(r["ticker"], anchor.get("published_at")) for r in anchor["short"]}
     notes: list[str] = []
     applied = [c for c in changes if a_ts < (_ts(c) or a_ts) <= when]
     for snap in applied:
-        apply_changes(long, short, snap["changes"], notes)
+        apply_changes(long, short, snap["changes"], notes, snap.get("published_at"))
     return {
         "anchor": anchor["feed_item_id"],
         "anchor_at": anchor.get("published_at"),
@@ -122,8 +126,8 @@ def check_ep_weekly(
                 }
             }
             continue
-        long = {canon(r["ticker"]) for r in cur["long"]}
-        short = {canon(r["ticker"]) for r in cur["short"]}
+        long = {canon(r["ticker"], cur.get("published_at")) for r in cur["long"]}
+        short = {canon(r["ticker"], cur.get("published_at")) for r in cur["short"]}
         res = {
             "pass": state["long"] == long and state["short"] == short,
             "prev_anchor": prev["feed_item_id"],
@@ -147,9 +151,10 @@ def check_ep_weekly(
 
 def ps_tickers(snap: dict[str, Any]) -> set[str]:
     return {
-        canon(r["ticker"])
+        canon(r["ticker"], snap.get("published_at"))
         for r in snap.get("roster", [])
-        if not r.get("is_cash") and canon(r["ticker"]) not in CASH
+        if not r.get("is_cash")
+        and canon(r["ticker"], snap.get("published_at")) not in CASH
     }
 
 
@@ -218,7 +223,7 @@ def check_ps(
             before = ps_tickers(prev)
             expected = set(before)
             for t in snap["transactions"]:
-                tk = canon(t["ticker"])
+                tk = canon(t["ticker"], snap.get("published_at"))
                 if t["action"] in ("sell-all",):
                     expected.discard(tk)
                 elif t["action"] in ("add-min", "add", "buy") and tk not in before:
@@ -332,7 +337,9 @@ def check_any10(
     prev: dict[str, Any] | None = None
     for snap in any10:
         when = _ts(snap)
-        mine = {canon(r["ticker"]) for r in snap.get("roster", [])}
+        mine = {
+            canon(r["ticker"], snap.get("published_at")) for r in snap.get("roster", [])
+        }
         results: dict[str, Any] = {}
         cands = [
             p
@@ -347,14 +354,17 @@ def check_any10(
             results["any10_subset_ps"] = {"pass": mine <= pt, "ps_feed_item_id": p["feed_item_id"],
                                           "ps_at": p.get("published_at"), "not_in_ps": sorted(mine - pt)}  # fmt: skip
         if prev is not None:
-            before = {canon(r["ticker"]) for r in prev.get("roster", [])}
+            before = {
+                canon(r["ticker"], prev.get("published_at"))
+                for r in prev.get("roster", [])
+            }
             stated_in = {
-                canon(c["ticker"])
+                canon(c["ticker"], snap.get("published_at"))
                 for c in snap.get("changes", [])
                 if c["action"] == "add"
             }
             stated_out = {
-                canon(c["ticker"])
+                canon(c["ticker"], snap.get("published_at"))
                 for c in snap.get("changes", [])
                 if c["action"] == "remove"
             }

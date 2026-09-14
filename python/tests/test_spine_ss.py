@@ -238,18 +238,27 @@ def test_aliases_canonicalize_replay(tmp_path, monkeypatch) -> None:
     from hedgeye.spine import aliases, paths
 
     f = tmp_path / "ticker-aliases.json"
-    f.write_text('{"aliases": {"UAA": "UA"}, "corrections": {"RC": "RCL"}}')
+    f.write_text(
+        '{"aliases": {"UAA": "UA"}, "corrections": {"RC": {"to": "RCL", '
+        '"from": "2026-06-23", "until": "2026-06-23"}}}'
+    )
     monkeypatch.setattr(paths, "TICKER_ALIASES", f)
     aliases.reload()
     try:
         a = _snap("101", 1, [], [], ["A"])
         b = _snap("102", 2, ["RC"], [], ["A", "RCL"])  # email typo, image correct
+        b["published_at"] = "2026-06-23T13:00"
+        a["published_at"] = "2026-06-22T13:00"
         ss_checks.run_checks([a, b])
         assert b["checks"]["results"]["replay"]["pass"]
-        assert aliases.kind("RC") == "correction"
-        assert aliases.kind("UAA") == "alias"
+        assert aliases.kind("RC", "2026-06-23") == "correction"
+        assert (
+            aliases.kind("RC", "2027-01-01") is None
+        )  # a future real RC is left alone
+        assert aliases.canon("RC", "2027-01-01") == "RC"
+        assert aliases.kind("UAA", "2026-02-09") == "alias"
         assert aliases.kind("RCL") is None
-        assert aliases.canon("uaa") == "UA"
+        assert aliases.canon("uaa", "2026-02-09") == "UA"
     finally:
         aliases.reload()
 

@@ -108,7 +108,10 @@ def render(
     # --- holdings vs books
     if holdings is not None and latest_ps and ep_now:
         ps_set = ps_tickers(latest_ps)
-        a10_set = {canon(r["ticker"]) for r in (latest_a10 or {}).get("roster", [])}
+        a10_set = {
+            canon(r["ticker"], (latest_a10 or {}).get("published_at"))
+            for r in (latest_a10 or {}).get("roster", [])
+        }
         held = {h.ticker: h for h in holdings if h.asset_class in ("etf", "fund")}
         L.append("## Holdings vs the books\n\n")
         if meta:

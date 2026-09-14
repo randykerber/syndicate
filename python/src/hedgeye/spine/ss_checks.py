@@ -23,7 +23,7 @@ def roster_tickers(snap: dict[str, Any]) -> set[str] | None:
     roster = snap.get("roster")
     if not roster:
         return None
-    return {canon(r["ticker"]) for r in roster["rows"]}
+    return {canon(r["ticker"], snap.get("published_at")) for r in roster["rows"]}
 
 
 MAX_REPLAY_GAP_DAYS = 14
@@ -97,10 +97,10 @@ def check_snapshot(
         expected = set(prev_tick)
         for mid in (between or []) + [snap]:
             mc = mid["changes"]
-            expected -= canon_set(mc["removed"])
-            expected |= canon_set(mc["added"])
-        a = canon_set(ch["added"])
-        r = canon_set(ch["removed"])
+            expected -= canon_set(mc["removed"], mid.get("published_at"))
+            expected |= canon_set(mc["added"], mid.get("published_at"))
+        a = canon_set(ch["added"], snap.get("published_at"))
+        r = canon_set(ch["removed"], snap.get("published_at"))
         missing = sorted(expected - tick)  # expected but not in image
         extra = sorted(tick - expected)  # in image but not expected
         results["replay"] = {
@@ -157,8 +157,14 @@ def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
 
 def diff_rosters(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     """Roster and stable-field changes from snapshot `a` to snapshot `b`."""
-    ra = {canon(r["ticker"]): r for r in (a.get("roster") or {}).get("rows", [])}
-    rb = {canon(r["ticker"]): r for r in (b.get("roster") or {}).get("rows", [])}
+    ra = {
+        canon(r["ticker"], a.get("published_at")): r
+        for r in (a.get("roster") or {}).get("rows", [])
+    }
+    rb = {
+        canon(r["ticker"], b.get("published_at")): r
+        for r in (b.get("roster") or {}).get("rows", [])
+    }
     added = sorted(set(rb) - set(ra))
     removed = sorted(set(ra) - set(rb))
     field_changes: list[dict[str, Any]] = []
