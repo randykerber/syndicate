@@ -320,3 +320,128 @@ def ticker_books(con: sqlite3.Connection, ticker: str) -> dict[str, Any]:
         "SELECT ts, stream, event_type, payload->>'$.action' AS action, payload->>'$.side' AS side, "
         "payload->>'$.bps' AS bps FROM events WHERE instrument=? AND stream != 'ss-stocks' ORDER BY ts", (t,))]  # fmt: skip
     return out
+
+
+def ps_moves(
+    con: sqlite3.Connection, ticker: str, all_stints: bool = False
+) -> dict[str, Any]:
+    """Keith's stated moves in a ticker since he last added it to Portfolio Solutions.
+
+    A stint = a run of PS reports the ticker appears in (a gap > 4 days starts a new one).
+    Moves come from Keith's Commentary (PortfolioTransaction events); the net is the sum of
+    stated bps (buys +, sells −). Opening at "min" and "sold all" carry no bps and are
+    listed but not summed.
+    """
+    from datetime import date
+
+    t = canon(ticker)
+    rows = con.execute(
+        "SELECT substr(published_at,1,10) AS d, rank FROM roster_row "
+        "WHERE stream='ps-daily' AND ticker=? ORDER BY published_at",
+        (t,),
+    ).fetchall()
+    stints: list[dict[str, Any]] = []
+    prev: date | None = None
+    for r in rows:
+        dd = date.fromisoformat(r["d"])
+        if prev is None or (dd - prev).days > 4:
+            stints.append(
+                {
+                    "start": r["d"],
+                    "end": r["d"],
+                    "reports": 1,
+                    "rank_first": r["rank"],
+                    "rank_last": r["rank"],
+                }
+            )
+        else:
+            stints[-1].update(
+                {
+                    "end": r["d"],
+                    "reports": stints[-1]["reports"] + 1,
+                    "rank_last": r["rank"],
+                }
+            )
+        prev = dd
+    latest_ps = con.execute(
+        "SELECT MAX(published_at) FROM stream_snapshot WHERE stream='ps-daily' AND n_rows>0"
+    ).fetchone()[0]
+    events = [
+        dict(e)
+        for e in con.execute(
+            "SELECT substr(ts,1,10) AS date, payload->>'$.action' AS action, payload->>'$.bps' AS bps, "
+            "payload->>'$.sentence' AS sentence FROM events WHERE stream='ps-daily' AND instrument=? ORDER BY ts",
+            (t,),
+        )
+    ]
+    out_stints = []
+    for st in (stints if all_stints else stints[-1:]):
+        # moves from the day before the stint starts (roster can lag the commentary a day)
+        lo = (date.fromisoformat(st["start"])).isoformat()
+        hi = st["end"] if st is not stints[-1] else "9999-12-31"
+        moves = [e for e in events if lo <= e["date"] <= hi]
+        net = 0
+        for e in moves:
+            if e["bps"]:
+                net += (
+                    int(e["bps"]) if e["action"] in ("buy", "add") else -int(e["bps"])
+                )
+        out_stints.append(
+            {
+                **st,
+                "still_in_ps": st is stints[-1] and st["end"] == (latest_ps or "")[:10],
+                "moves": moves,
+                "net_bps": net,
+                "unsized": [e["action"] for e in moves if not e["bps"]],
+            }
+        )
+    return {
+        "ticker": t,
+        "latest_ps_report": latest_ps,
+        "stints": out_stints,
+        "n_stints": len(stints),
+    }
+
+
+def format_moves(m: dict[str, Any]) -> str:
+    if not m["stints"]:
+        return (
+            f"{m['ticker']}: never in Portfolio Solutions (as far as the archive goes)."
+        )
+    L = []
+    for st in m["stints"]:
+        status = "still in PS" if st["still_in_ps"] else f"left after {st['end']}"
+        L.append(
+            f"{m['ticker']} — PS stint {st['start']} → {st['end']} ({st['reports']} reports, "
+            f"rank {st['rank_first']} → {st['rank_last']}, {status})"
+        )
+        L.append("| Date | Move | Size |\n|---|---|---:|")
+        for e in st["moves"]:
+            size = (
+                {
+                    "buy": f"+{e['bps']} bps",
+                    "add": f"+{e['bps']} bps",
+                    "sell": f"−{e['bps']} bps",
+                }.get(e["action"])
+                if e["bps"]
+                else {"add-min": "min", "sell-all": "all", "sell-to-min": "to min"}.get(
+                    e["action"], "?"
+                )
+            )
+            verb = {
+                "buy": "bought",
+                "sell": "sold",
+                "add-min": "added at min",
+                "add": "added",
+                "sell-all": "sold all",
+                "sell-to-min": "sold down to min",
+            }.get(e["action"], e["action"])
+            L.append(f"| {e['date']} | {verb} | {size} |")
+        sign = "+" if st["net_bps"] >= 0 else "−"
+        extra = f" (plus {', '.join(st['unsized'])}, unsized)" if st["unsized"] else ""
+        L.append(f"Net moves = {sign}{abs(st['net_bps'])} bps{extra}\n")
+    if m["n_stints"] > len(m["stints"]):
+        L.append(
+            f"({m['n_stints'] - len(m['stints'])} earlier stint(s); `--all` shows them)"
+        )
+    return "\n".join(L)

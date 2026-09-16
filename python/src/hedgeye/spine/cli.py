@@ -229,6 +229,14 @@ def _holdings(fid_csv: Path, ibkr: Path | None) -> tuple[list[Any], dict[str, An
     return H.merge(hs), {"fidelity": fid_csv.name, "ibkr": ibkr.name if ibkr else None}
 
 
+def cmd_moves(a: argparse.Namespace) -> int:
+    with db.connect() as con:
+        for t in a.ticker:
+            m = db.ps_moves(con, t, all_stints=a.all)
+            print(_dump(m) if a.json else db.format_moves(m))
+    return 0
+
+
 def cmd_holdings(a: argparse.Namespace) -> int:
     from . import holdings as H
 
@@ -338,6 +346,13 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("query")
     s.add_argument("ticker", nargs="+")
     s.set_defaults(fn=cmd_query)  # noqa: E702
+    s = sub.add_parser("moves")
+    s.add_argument("ticker", nargs="+")
+    s.add_argument(
+        "--all", action="store_true", help="every PS stint, not just the current/last"
+    )
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(fn=cmd_moves)  # noqa: E702
     s = sub.add_parser("holdings")
     s.add_argument("--fidelity", required=True)
     s.add_argument("--ibkr")
