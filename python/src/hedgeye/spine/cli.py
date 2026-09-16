@@ -237,6 +237,14 @@ def cmd_moves(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ticker(a: argparse.Namespace) -> int:
+    with db.connect() as con:
+        for t in a.ticker:
+            p = db.ticker_profile(con, t)
+            print(_dump(p) if a.json else db.format_ticker(p))
+    return 0
+
+
 def cmd_holdings(a: argparse.Namespace) -> int:
     from . import holdings as H
 
@@ -353,6 +361,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     s.add_argument("--json", action="store_true")
     s.set_defaults(fn=cmd_moves)  # noqa: E702
+    s = sub.add_parser("ticker")
+    s.add_argument("ticker", nargs="+")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(fn=cmd_ticker)  # noqa: E702
     s = sub.add_parser("holdings")
     s.add_argument("--fidelity", required=True)
     s.add_argument("--ibkr")

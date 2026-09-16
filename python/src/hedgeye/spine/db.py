@@ -445,3 +445,99 @@ def format_moves(m: dict[str, Any]) -> str:
             f"({m['n_stints'] - len(m['stints'])} earlier stint(s); `--all` shows them)"
         )
     return "\n".join(L)
+
+
+def ticker_profile(con: sqlite3.Connection, ticker: str) -> dict[str, Any]:
+    """Everything the spine has seen about one ticker, by book. The dispatcher behind
+    `spine ticker`: which views apply is decided by presence in our own data, not by an
+    external notion of instrument type."""
+    t = canon(ticker)
+    ss = ticker_history(con, t)
+    books = ticker_books(con, t)
+    seen_ss = bool(ss["presence"] and ss["presence"]["snapshots"]) or bool(ss["events"])
+    seen_etf = any(
+        books.get(k, {}).get("snapshots") for k in ("ps-daily", "ep-weekly", "any10")
+    ) or bool(books["events"])
+    return {
+        "ticker": t,
+        "seen_in_signal_strength": seen_ss,
+        "seen_in_etf_books": seen_etf,
+        "ss": ss if seen_ss else None,
+        "books": books if seen_etf else None,
+        "moves": ps_moves(con, t) if seen_etf else None,
+        "not_yet_in_spine": [
+            "RTA (Real-Time Alerts)",
+            "The Call mentions",
+            "Risk Range Signals",
+        ],
+    }
+
+
+def format_ticker(p: dict[str, Any]) -> str:
+    t = p["ticker"]
+    L: list[str] = []
+    if not p["seen_in_signal_strength"] and not p["seen_in_etf_books"]:
+        L.append(
+            f"**{t}** — not seen in any Hedgeye book the spine tracks (Signal Strength, PS, ETF Pro, Any10)."
+        )
+    if p["seen_in_signal_strength"]:
+        ss = p["ss"]
+        cur = ss["current"]
+        pr = ss["presence"]
+        L.append(f"## {t} in Signal Strength Stocks")
+        if cur:
+            L.append(
+                f"**In the roster** as of {cur['published_at']}: rank {cur['best_idea_rank']} ({cur['rank_kind']}), "
+                f"{cur['analyst']}, {cur['sector']}, {cur['days_on']} days on, signal date {cur['signal_date']}, "
+                f"entry {cur['entry_price']}, recent {cur['recent_price']}."
+            )
+        else:
+            L.append(
+                f"**Not in the current roster** (latest snapshot {ss['latest_snapshot']})."
+            )
+        if pr and pr["snapshots"]:
+            L.append(
+                f"Seen in {pr['snapshots']} snapshots, {pr['first_seen'][:10]} → {pr['last_seen'][:10]}."
+            )
+        if ss["events"]:
+            L.append(
+                "Adds/removes (from the email text): "
+                + ", ".join(f"{e['ts'][:10]} {e['action']}" for e in ss["events"])
+            )
+        L.append("")
+    if p["seen_in_etf_books"]:
+        b = p["books"]
+        L.append(f"## {t} in the ETF books")
+        for k, label in (
+            ("ps-daily", "Portfolio Solutions"),
+            ("ep-weekly", "ETF Pro weekly"),
+            ("any10", "Go-Anywhere 10"),
+        ):
+            v = b.get(k)
+            if not v:
+                continue
+            state = (
+                f"IN ({v['side']}{', rank ' + str(v['rank']) if v['rank'] else ''})"
+                if v["in"]
+                else "out"
+            )
+            hist = (
+                f"seen {v['snapshots']}×, {v['first_seen'][:10]} → {v['last_seen'][:10]}"
+                if v["snapshots"]
+                else "never seen"
+            )
+            L.append(f"- {label} as of {v['as_of'][:10]}: **{state}** — {hist}")
+        ep = [e for e in b["events"] if e["stream"] == "ep-changes"]
+        if ep:
+            L.append(
+                "- ETF Pro ledger: "
+                + ", ".join(
+                    f"{e['ts'][:10]} {e['action']} {e['side'] or ''}".rstrip()
+                    for e in ep[-8:]
+                )
+                + (" …" if len(ep) > 8 else "")
+            )
+        L.append("")
+        L.append(format_moves(p["moves"]))
+    L.append("_Not yet in the spine: " + ", ".join(p["not_yet_in_spine"]) + "._")
+    return "\n".join(L)
