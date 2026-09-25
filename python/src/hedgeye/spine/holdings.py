@@ -34,6 +34,11 @@ OVERRIDES: dict[str, str] = {
 }  # fmt: skip
 
 
+_OPTION = re.compile(
+    r"^-?(?P<under>[A-Z]{1,6})(?P<yy>\d{2})(?P<mm>\d{2})(?P<dd>\d{2})(?P<pc>[CP])(?P<strike>\d+(?:\.\d+)?)$"
+)
+
+
 @dataclass
 class Holding:
     ticker: str
@@ -43,10 +48,35 @@ class Holding:
     description: str
     source: str  # fidelity | ibkr
     class_reason: str
+    option: dict[str, Any] | None = (
+        None  # underlying, expiry, put_call, strike, exposure
+    )
+
+
+def parse_option(symbol: str, quantity: float) -> dict[str, Any] | None:
+    """Fidelity option symbol `-IWM261120P260` -> contract facts + the exposure it
+    gives to the underlying: a long put or short call is SHORT exposure, a long call or
+    short put is LONG exposure. Quantity sign = long/short the contract."""
+    m = _OPTION.match(symbol.strip())
+    if not m:
+        return None
+    put = m.group("pc") == "P"
+    long_contract = quantity >= 0
+    exposure = "short" if (put == long_contract) else "long"
+    return {
+        "underlying": m.group("under"),
+        "expiry": f"20{m.group('yy')}-{m.group('mm')}-{m.group('dd')}",
+        "put_call": "put" if put else "call",
+        "strike": float(m.group("strike")),
+        "contracts": quantity,
+        "exposure": exposure,
+    }
 
 
 def classify(symbol: str, description: str) -> tuple[str, str]:
     d = f" {description.upper()} "
+    if _OPTION.match(symbol.strip()):
+        return "option", "option-symbol"
     if symbol in OVERRIDES:
         return OVERRIDES[symbol], "override"
     if (
@@ -90,6 +120,7 @@ def from_fidelity(csv_path: Path) -> list[Holding]:
                 p.description,
                 "fidelity",
                 why,
+                option=parse_option(p.symbol, p.quantity) if cls == "option" else None,
             )
         )
     return out

@@ -284,3 +284,21 @@ def test_derive_roster_from_ledger() -> None:
     assert mid["roster_source"]["kind"] == "derived"
     assert mid["roster_from_later_image"]["rows"][0]["ticker"] == "X"
     assert ss_extract.roster_trusted(mid)
+
+
+def test_option_parse_and_exposure() -> None:
+    o = holdings.parse_option("-IWM261120P260", 5)
+    assert o == {
+        "underlying": "IWM",
+        "expiry": "2026-11-20",
+        "put_call": "put",
+        "strike": 260.0,
+        "contracts": 5,
+        "exposure": "short",
+    }
+    assert holdings.parse_option("-SPY270115C500", 2)["exposure"] == "long"
+    assert holdings.parse_option("-SPY270115C500", -2)["exposure"] == "short"
+    assert (
+        holdings.classify("-IWM261120P260", "IWM NOV 20 2026 $260 PUT")[0] == "option"
+    )
+    assert holdings.parse_option("IWM", 100) is None

@@ -132,8 +132,44 @@ def render(
             f"- Held ETFs in none of the books ({len(not_in_any)}): {', '.join(not_in_any) or '—'}\n"
         )
         L.append(
-            f"- In PS, not held ({len(ps_not_held)}): {', '.join(ps_not_held) or '—'}\n\n"
+            f"- In PS, not held ({len(ps_not_held)}): {', '.join(ps_not_held) or '—'}\n"
         )
+        opts = [h for h in holdings if h.option]
+        if opts:
+            L.append(
+                "\n**Options** (exposure to the underlying, checked against the EP books)\n\n"
+            )
+            L.append(
+                "| Contract | Qty | Exposure | Underlying in EP |\n|---|---:|---|---|\n"
+            )
+            for h in sorted(opts, key=lambda x: x.option["underlying"]):
+                o = h.option
+                u = canon(o["underlying"])
+                if o["exposure"] == "short":
+                    where = (
+                        "**SHORT book ✓**"
+                        if u in ep_now["short"]
+                        else (
+                            "LONG book ⚠ (exposure conflicts)"
+                            if u in ep_now["long"]
+                            else "neither"
+                        )
+                    )
+                else:
+                    where = (
+                        "**LONG book ✓**"
+                        if u in ep_now["long"]
+                        else (
+                            "SHORT book ⚠ (exposure conflicts)"
+                            if u in ep_now["short"]
+                            else "neither"
+                        )
+                    )
+                L.append(
+                    f"| {u} {o['expiry']} {o['strike']:g} {o['put_call']} | {o['contracts']:g} "
+                    f"| {o['exposure']} {u} | {where} |\n"
+                )
+        L.append("\n")
 
     # --- S31
     rep = s31_report(ps)
