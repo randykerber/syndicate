@@ -18,6 +18,9 @@ DB_PATH = PROD / "hedgeye.sqlite"
 RUNS_LOG = PROD / "runs.jsonl"
 TICKER_ALIASES = PROD / "ticker-aliases.json"
 
+FID_POSITIONS = D / "downloads" / "fid" / "positions"  # Fidelity Positions export
+IBKR_POSITIONS = D / "downloads" / "ibkr" / "positions"  # saved IBKR connector snapshot
+
 FIN_VAULT = HOME / "local" / "obsidian" / "Fin"
 GEN_DIR = FIN_VAULT / "Areas" / "Hedgeye" / "gen"
 

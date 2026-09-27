@@ -122,6 +122,14 @@ def test_monday_opener_witness() -> None:
     assert "monday_opener" not in mon2["checks"]["results"]
 
 
+def test_refresh_bell_rings_only_for_new_failures() -> None:
+    from hedgeye.spine import refresh
+
+    f = refresh.split_failures(["179105", "188000"], ["179105", "182502"])
+    assert f == {"new": ["188000"], "standing": ["179105"], "cleared": ["182502"]}
+    assert refresh.split_failures([], []) == {"new": [], "standing": [], "cleared": []}
+
+
 def test_subject_grammar_rejects_other() -> None:
     assert ss_extract.parse_subject(
         "Quick Start Guide for your Signal Strength Stocks Subscription"

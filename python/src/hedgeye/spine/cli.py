@@ -11,6 +11,9 @@ diff [A B]            roster + stable-field changes between two snapshots (defau
 query TICKER          in/out, status, history
 holdings --fidelity CSV [--ibkr JSON]   compare holdings to the latest roster
 render                write Fin/Areas/Hedgeye/gen/SS Stocks.md
+refresh               the daily routine in one go: mail -> extract -> check -> load ->
+                      render (newest Fidelity/IBKR files), then a report of what is
+                      new, stale, or newly failing. --no-mail skips the Apple Mail pull.
 """
 
 from __future__ import annotations
@@ -311,6 +314,19 @@ def cmd_render(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_refresh(a: argparse.Namespace) -> int:
+    from . import refresh
+
+    report = refresh.run(
+        no_mail=a.no_mail,
+        limit=a.limit,
+        fidelity=Path(a.fidelity).expanduser() if a.fidelity else None,
+        ibkr=Path(a.ibkr).expanduser() if a.ibkr else None,
+    )
+    print(_dump(report) if a.json else refresh.format_report(report))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="spine", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)  # fmt: skip
@@ -379,6 +395,13 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--fidelity")
     s.add_argument("--ibkr")
     s.set_defaults(fn=cmd_render)  # noqa: E702
+    s = sub.add_parser("refresh")
+    s.add_argument("--no-mail", action="store_true", help="skip the Apple Mail pull")
+    s.add_argument("--limit", type=int, default=12, help="messages per mailbox to pull")
+    s.add_argument("--fidelity", help="override the newest Fidelity export")
+    s.add_argument("--ibkr", help="override the newest IBKR snapshot")
+    s.add_argument("--json", action="store_true", help="full report as JSON")
+    s.set_defaults(fn=cmd_refresh)  # noqa: E702
 
     a = p.parse_args(argv)
     return int(a.fn(a))
