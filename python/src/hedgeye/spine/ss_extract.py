@@ -1,6 +1,8 @@
 """Signal Strength Stocks — `extract`: emails -> one JSON snapshot per message.
 
-What an SS email carries (surveyed 2026-09-13, 136 messages):
+Two email eras.
+
+**Image era** (Feb 2026 → 2026-09-24; surveyed 2026-09-13, 136 messages):
 - subject: `Signal Strength Stocks: 61 Stocks (3 Added, 12 Removed)` — or `(No changes)`
 - text body: `Added: META, MRVL, AAPL` / `Removed: DGX, ...` lines (absent on no-change days)
 - the full roster **only as a PNG** on a public CloudFront URL (three size variants;
@@ -8,8 +10,17 @@ What an SS email carries (surveyed 2026-09-13, 136 messages):
   under the same chart id with a new filename (seen 2026-09-02: `sss_9_2.png` -> 403,
   `sss_fix_micc.png` on the feed page); `overrides.json` in the chart folder maps
   feed_item_id -> replacement URL, hand-maintained.
+  Nothing here interprets the image. That is `ss_roster.py`, a separate hand-run step.
 
-Nothing here interprets the image. That is `ss_roster.py`, a separate hand-run step.
+**Table era** (from 2026-09-25, feed item 187677; Hedgeye's dashboard launch):
+- subject: `Signal Strength Stocks: 59 Stocks (8 added, 1 removed)` — lowercase, and a
+  clause may be absent: `58 Stocks (1 removed)`
+- text body: `ADDING: AKAM, ...` / `REMOVING: U`
+- the full roster as an **HTML table** (`table.open-positions-table`): Ticker · Name ·
+  Sector · Analyst · Entry Date · Entry Price · Recent Price · Total Return · Best Idea
+  Rank · Holding Period. No chart image. `parse_roster_table` reads it here, at extract
+  time, into the same roster shape the image path produced, so everything downstream is
+  unchanged; `roster_source.kind == "email-table"` says which era a roster came from.
 """
 
 from __future__ import annotations
@@ -18,6 +29,8 @@ import json
 import re
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -26,15 +39,19 @@ from .eml import read_eml
 
 # Grammar drift seen in the corpus: "Signal Strength Stocks Update: 59 Stocks (...)"
 # (Apr 2026), "Signal Strength Stocks: 71 Stocks" (no change clause, 2026-05-26),
-# "(No changes)" / "(no changes)", and a lowercase "signal".
+# "(No changes)" / "(no changes)", a lowercase "signal"; and from 2026-09-25 the
+# table-era forms "(8 added, 1 removed)", "(1 removed)", "(8 added)".
 _SUBJECT = re.compile(
     r"Signal Strength Stocks(?P<update>\s+Update)?:\s*(?P<count>\d+)\s*Stocks\s*"
-    r"(?:\((?:(?P<added>\d+)\s*Added,\s*(?P<removed>\d+)\s*Removed"
-    r"|(?P<nochange>no changes))\))?\s*$",
+    r"(?:\((?:"
+    r"(?P<added>\d+)\s*Added(?:,\s*(?P<removed>\d+)\s*Removed)?"
+    r"|(?P<removed_only>\d+)\s*Removed"
+    r"|(?P<nochange>no changes)"
+    r")\))?\s*$",
     re.I,
 )
-_ADDED = re.compile(r"^\s*Added:\s*(?P<list>.*?)\s*$", re.I | re.M)
-_REMOVED = re.compile(r"^\s*Removed:\s*(?P<list>.*?)\s*$", re.I | re.M)
+_ADDED = re.compile(r"^\s*(?:Added|Adding):\s*(?P<list>.*?)\s*$", re.I | re.M)
+_REMOVED = re.compile(r"^\s*(?:Removed|Removing):\s*(?P<list>.*?)\s*$", re.I | re.M)
 _CHART = re.compile(
     r'src="(?P<url>https://d1yhils6iwh5l5\.cloudfront\.net/charts/resized/'
     r"(?P<chart_id>\d+)/(?P<variant>\w+)/(?P<filename>[^\"?]+))"
@@ -46,12 +63,14 @@ def parse_subject(subject: str) -> dict[str, Any]:
     m = _SUBJECT.search(subject)
     if not m:
         return {"recognized": False}
-    has_counts = m.group("added") is not None
+    added = m.group("added")
+    removed = m.group("removed") or m.group("removed_only")
+    has_counts = added is not None or removed is not None
     return {
         "recognized": True,
         "count": int(m.group("count")),
-        "added": int(m.group("added")) if has_counts else 0,
-        "removed": int(m.group("removed")) if has_counts else 0,
+        "added": int(added) if added is not None else 0,
+        "removed": int(removed) if removed is not None else 0,
         "no_change_wording": bool(m.group("nochange")),
         "counts_absent": not has_counts and not m.group("nochange"),
         "update_wording": bool(m.group("update")),
@@ -92,6 +111,121 @@ def find_chart(html: str) -> dict[str, Any] | None:
         "variant": m.group("variant"),
         "filename": m.group("filename"),
     }
+
+
+class _TableGrab(HTMLParser):
+    """Collect every <table> as a list of rows of cell texts (th and td alike)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.tables: list[list[list[str]]] = []
+        self._rows: list[list[str]] | None = None
+        self._cell: list[str] | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "table":
+            self._rows = []
+        elif tag == "tr" and self._rows is not None:
+            self._rows.append([])
+        elif tag in ("td", "th") and self._rows:
+            self._cell = []
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("td", "th") and self._cell is not None and self._rows:
+            self._rows[-1].append(" ".join("".join(self._cell).split()))
+            self._cell = None
+        elif tag == "table" and self._rows is not None:
+            self.tables.append(self._rows)
+            self._rows = None
+
+    def handle_data(self, data: str) -> None:
+        if self._cell is not None:
+            self._cell.append(data)
+
+
+# Table header -> roster field. The image-era names are kept so every consumer
+# (checks, diff, db, render) sees one schema; `name` is new with the table era.
+_COLUMNS = {
+    "ticker": "ticker",
+    "name": "name",
+    "position": "position",
+    "sector": "sector",
+    "analyst": "analyst",
+    "entry date": "signal_date",
+    "entry price": "entry_price",
+    "recent price": "recent_price",
+    "total return": "pct_since_signal",
+    "best idea rank": "best_idea_rank",
+    "holding period": "days_on",
+}
+_NUMERIC = {"entry_price", "recent_price", "pct_since_signal"}
+
+
+def _number(raw: str) -> float | None:
+    s = raw.replace("$", "").replace(",", "").replace("%", "").replace("+", "").strip()
+    if not s or s in {"-", "—", "n/a"}:
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+def _days(raw: str) -> int | None:
+    m = re.search(r"(\d+)", raw)
+    return int(m.group(1)) if m else None
+
+
+def _date_mdyyyy(raw: str) -> str | None:
+    """`05/19/26` or `5/19/2026` -> `5/19/2026`, the image-era convention, so a
+    ticker's `signal_date` does not read as changed across the era boundary."""
+    m = re.match(r"^\s*(\d{1,2})/(\d{1,2})/(\d{2}|\d{4})\s*$", raw)
+    if not m:
+        return raw.strip() or None
+    mo, d, y = int(m.group(1)), int(m.group(2)), m.group(3)
+    yy = int(y) + 2000 if len(y) == 2 else int(y)
+    return f"{mo}/{d}/{yy}"
+
+
+def parse_roster_table(html: str) -> dict[str, Any] | None:
+    """The table-era roster, in the shape `ss_roster.Roster` produces: None when the
+    email carries no table whose header starts with Ticker (the image era)."""
+    from .ss_roster import rank_kind
+
+    grab = _TableGrab()
+    grab.feed(html)
+    for rows in grab.tables:
+        if not rows or not rows[0] or rows[0][0].strip().lower() != "ticker":
+            continue
+        headers = rows[0]
+        fields = [_COLUMNS.get(h.strip().lower()) for h in headers]
+        out: list[dict[str, Any]] = []
+        for cells in rows[1:]:
+            if not cells or len(cells) != len(headers):
+                continue
+            row: dict[str, Any] = {k: None for k in _COLUMNS.values()}
+            for f, cell in zip(fields, cells):
+                if f is None:
+                    continue
+                if f in _NUMERIC:
+                    row[f] = _number(cell)
+                elif f == "days_on":
+                    row[f] = _days(cell)
+                elif f == "signal_date":
+                    row[f] = _date_mdyyyy(cell)
+                else:
+                    row[f] = cell.strip() or None
+            if not row["ticker"]:
+                continue
+            row["rank_kind"] = rank_kind(row["best_idea_rank"])
+            out.append(row)
+        return {
+            "column_headers": headers,
+            "row_count_reported": len(out),
+            "rows": out,
+            "notes": [],
+        }
+    return None
 
 
 def load_overrides() -> dict[str, str]:
@@ -136,6 +270,16 @@ def build_snapshot(rec: dict[str, Any], mailbox: str) -> dict[str, Any]:
     subject = parse_subject(rec["subject"])
     changes = parse_changes(rec["text"] or rec["html"])
     chart = find_chart(rec["html"])
+    table = parse_roster_table(rec["html"]) if chart is None else None
+    roster_source = (
+        {
+            "kind": "email-table",
+            "read_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "columns": table["column_headers"],
+        }
+        if table
+        else None
+    )
     return {
         "stream": "ss-stocks",
         "feed_item_id": ids[0] if len(ids) == 1 else None,
@@ -152,8 +296,8 @@ def build_snapshot(rec: dict[str, Any], mailbox: str) -> dict[str, Any]:
         "subject_parsed": subject,
         "changes": changes,
         "chart": chart,
-        "roster": None,
-        "roster_source": None,
+        "roster": table,
+        "roster_source": roster_source,
         "checks": None,
         "exceptions": [],
     }
@@ -205,16 +349,22 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
                     out.write_text(_dump(prev))
                 summary["duplicates"] += 1
                 continue
-            for k in (
-                "roster",
-                "roster_source",
+            # A table-era roster is re-read from the email every run (deterministic);
+            # an image-era roster (session/API read) is carried over from the file.
+            keep = [
                 "checks",
                 "roster_from_later_image",
                 "roster_from_later_image_source",
-            ):
+            ]
+            if snap["roster"] is None:
+                keep += ["roster", "roster_source"]
+            for k in keep:
                 if prev.get(k) is not None:
                     snap[k] = prev.get(k)
-            snap["exceptions"] = prev.get("exceptions", [])
+            snap["exceptions"] = [
+                e for e in prev.get("exceptions", [])
+                if not (snap["roster"] is not None and e == "no chart image in html")
+            ]  # fmt: skip
 
         if snap["chart"] is not None:
             chart = snap["chart"]
@@ -240,7 +390,9 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
                     summary["failed"].append({"feed_item_id": fid, **r})
                     if "chart unavailable" not in snap["exceptions"]:
                         snap["exceptions"].append("chart unavailable")
-        else:
+        elif snap["roster"] is not None:
+            summary["rosters_from_table"] = summary.get("rosters_from_table", 0) + 1
+        elif "no chart image in html" not in snap["exceptions"]:
             snap["exceptions"].append("no chart image in html")
 
         out.write_text(_dump(snap))

@@ -27,6 +27,7 @@ def roster_tickers(snap: dict[str, Any]) -> set[str] | None:
 
 
 MAX_REPLAY_GAP_DAYS = 14
+MAX_WEEKEND_GAP_DAYS = 4  # Fri -> Mon is 3; a Thursday holiday makes it 4
 
 
 def _days_between(a: str | None, b: str | None) -> float | None:
@@ -40,6 +41,20 @@ def _days_between(a: str | None, b: str | None) -> float | None:
         ).total_seconds() / 86400
     except ValueError:
         return None
+
+
+def _is_monday_opener(snap: dict[str, Any], prev: dict[str, Any]) -> bool:
+    """Published on a Monday, and the previous snapshot is from an earlier day."""
+    from datetime import datetime
+
+    a, b = prev.get("published_at"), snap.get("published_at")
+    if not a or not b:
+        return False
+    try:
+        da, db = datetime.fromisoformat(a), datetime.fromisoformat(b)
+    except ValueError:
+        return False
+    return db.weekday() == 0 and da.date() < db.date()
 
 
 def check_snapshot(
@@ -113,6 +128,25 @@ def check_snapshot(
             "removed_still_in_image": sorted(r & tick),
         }
 
+    # 4 — Monday opener (Randy, 2026-09-26): the first email of a Monday is
+    # boilerplate, the roster entering the week; it must equal the last roster of
+    # the prior week. Only when it states no changes and a prior roster exists.
+    if (
+        tick is not None
+        and prev_tick is not None
+        and gap is not None
+        and gap <= MAX_WEEKEND_GAP_DAYS
+        and _is_monday_opener(snap, prev)
+        and sp["added"] == 0
+        and sp["removed"] == 0
+    ):
+        results["monday_opener"] = {
+            "pass": tick == prev_tick,
+            "prev_feed_item_id": prev["feed_item_id"],
+            "dropped_over_weekend": sorted(prev_tick - tick),
+            "appeared_over_weekend": sorted(tick - prev_tick),
+        }
+
     applicable = [v for v in results.values() if "pass" in v]
     passed = sum(1 for v in applicable if v["pass"])
     return {
@@ -140,7 +174,9 @@ def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
                     "feed_item_id": snap["feed_item_id"],
                     "published_at": snap.get("published_at"),
                     "failed": [
-                        k for k, v in snap["checks"]["results"].items() if not v["pass"]
+                        k
+                        for k, v in snap["checks"]["results"].items()
+                        if "pass" in v and not v["pass"]
                     ],
                 }
             )

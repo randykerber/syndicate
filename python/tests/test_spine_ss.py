@@ -37,6 +37,91 @@ def test_subject_grammar_no_changes_variants() -> None:
         assert s["recognized"] and s["added"] == 0 and s["removed"] == 0
 
 
+def test_subject_grammar_table_era() -> None:
+    """From 2026-09-25: lowercase, and either clause may be absent."""
+    s = ss_extract.parse_subject(
+        "Signal Strength Stocks: 59 Stocks (8 added, 1 removed)"
+    )
+    assert (s["count"], s["added"], s["removed"]) == (59, 8, 1)
+    s = ss_extract.parse_subject("Signal Strength Stocks: 58 Stocks (1 removed)")
+    assert s["recognized"] and (s["count"], s["added"], s["removed"]) == (58, 0, 1)
+    assert not s["counts_absent"]
+    s = ss_extract.parse_subject("Signal Strength Stocks: 60 Stocks (2 added)")
+    assert s["recognized"] and (s["added"], s["removed"]) == (2, 0)
+
+
+def test_changes_table_era_wording() -> None:
+    c = ss_extract.parse_changes("ADDING: AKAM, GLBE, RPBPF\n\nREMOVING: U\n")
+    assert c["added"] == ["AKAM", "GLBE", "RPBPF"] and c["removed"] == ["U"]
+
+
+_TABLE_HTML = """
+<p><span>ADDING: </span><span>AKAM</span></p>
+<table class="data-table open-positions-table"><thead><tr>
+<th>Ticker</th><th>Name</th><th>Sector</th><th>Analyst</th><th>Entry Date</th>
+<th>Entry Price</th><th>Recent Price</th><th>Total Return</th><th>Best Idea Rank</th>
+<th>Holding Period</th></tr></thead><tbody>
+<tr><td>TXG</td><td>10x Genomics Inc.</td><td>Healthcare</td><td>Tom Tobin</td>
+<td>05/19/26</td><td>$21.70</td><td>$82.59</td><td>+277.47%</td><td>3/6</td><td>129 days</td></tr>
+<tr><td>MSFT</td><td>Microsoft Corporation</td><td>KM Signal</td><td>KM Signal</td>
+<td>08/12/26</td><td>$493.20</td><td>$515.37</td><td>+4.47%</td><td>KM Signal</td><td>44 days</td></tr>
+<tr><td>WGS</td><td>GeneDx Holdings Corp.</td><td>Healthcare</td><td>Tom Tobin</td>
+<td>09/21/26</td><td>$98.29</td><td>$88.64</td><td>-11.00%</td><td>Bench</td><td>1 day</td></tr>
+</tbody></table>
+"""
+
+
+def test_roster_table_parses_into_image_era_schema() -> None:
+    r = ss_extract.parse_roster_table(_TABLE_HTML)
+    assert r is not None and r["row_count_reported"] == 3
+    assert r["column_headers"][0] == "Ticker"
+    txg, msft, wgs = r["rows"]
+    assert txg["ticker"] == "TXG" and txg["name"] == "10x Genomics Inc."
+    assert txg["signal_date"] == "5/19/2026"  # image-era date convention
+    assert txg["entry_price"] == 21.70 and txg["recent_price"] == 82.59
+    assert txg["pct_since_signal"] == 277.47 and txg["days_on"] == 129
+    assert txg["best_idea_rank"] == "3/6" and txg["rank_kind"] == "ranked"
+    assert msft["rank_kind"] == "km-signal" and msft["sector"] == "KM Signal"
+    assert wgs["pct_since_signal"] == -11.0 and wgs["days_on"] == 1
+
+
+def test_roster_table_absent_in_image_era() -> None:
+    assert (
+        ss_extract.parse_roster_table("<table><tr><th>Date</th></tr></table>") is None
+    )
+    assert ss_extract.find_chart(_TABLE_HTML) is None
+
+
+def test_snapshot_from_table_era_email() -> None:
+    rec = {
+        "feed_item_ids": ["187677"], "subject": "Signal Strength Stocks: 3 Stocks (1 added)",
+        "text": "ADDING: AKAM\n", "html": _TABLE_HTML, "source_path": "x", "message_id": "m",
+        "in_reply_to": None, "references": None, "arrived_at": "2026-09-25T11:32:23-04:00",
+        "published_stamp": "09/25/2026 11:31 AM EDT", "published_at": "2026-09-25T11:31",
+    }  # fmt: skip
+    snap = ss_extract.build_snapshot(rec, "HE-SS-Stocks")
+    assert snap["chart"] is None
+    assert snap["roster"]["row_count_reported"] == 3
+    assert snap["roster_source"]["kind"] == "email-table"
+    assert snap["changes"]["added"] == ["AKAM"]
+    assert ss_extract.roster_trusted(snap)
+
+
+def test_monday_opener_witness() -> None:
+    fri = _snap("101", 2, [], [], ["A", "B"])
+    fri["published_at"] = "2026-09-18T11:00"  # Friday
+    mon = _snap("102", 2, [], [], ["A", "C"])  # boilerplate that disagrees
+    mon["published_at"] = "2026-09-21T09:24"  # Monday
+    ss_checks.run_checks([fri, mon])
+    r = mon["checks"]["results"]["monday_opener"]
+    assert not r["pass"]
+    assert r["dropped_over_weekend"] == ["B"] and r["appeared_over_weekend"] == ["C"]
+    mon2 = _snap("103", 2, ["D"], [], ["A", "C", "D"])
+    mon2["published_at"] = "2026-09-21T11:43"  # second Monday email: not an opener
+    ss_checks.run_checks([fri, mon, mon2])
+    assert "monday_opener" not in mon2["checks"]["results"]
+
+
 def test_subject_grammar_rejects_other() -> None:
     assert ss_extract.parse_subject(
         "Quick Start Guide for your Signal Strength Stocks Subscription"
