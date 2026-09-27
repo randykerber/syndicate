@@ -23,6 +23,9 @@ IBKR_POSITIONS = D / "downloads" / "ibkr" / "positions"  # saved IBKR connector 
 
 FIN_VAULT = HOME / "local" / "obsidian" / "Fin"
 GEN_DIR = FIN_VAULT / "Areas" / "Hedgeye" / "gen"
+# Source of record for HE sector assignments + sector name aliases (hand-maintained
+# tables under fixed headings; see spine/assignments.py). Read only.
+SS_SOURCE_PAGE = FIN_VAULT / "Areas" / "Hedgeye" / "Signal Strength Stocks.md"
 
 SS_MAILBOX = "HE-SS-Stocks"
 

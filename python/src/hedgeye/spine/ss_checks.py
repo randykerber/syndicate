@@ -57,10 +57,49 @@ def _is_monday_opener(snap: dict[str, Any], prev: dict[str, Any]) -> bool:
     return db.weekday() == 0 and da.date() < db.date()
 
 
+def check_analysts(
+    snap: dict[str, Any], assignments: dict[str, Any]
+) -> dict[str, Any] | None:
+    """5 — every printed analyst is the lead or a stand-in for that sector on that
+    date, per the source table (spine/assignments.py). `KM Signal` rows are skipped:
+    no analyst endorses them. Unknown sectors are reported, not failed."""
+    from .assignments import canonical_sector, expected_analysts
+
+    roster = snap.get("roster")
+    if not roster or not assignments.get("assignments"):
+        return None
+    on = snap.get("published_at") or snap.get("arrived_at") or ""
+    mismatches: list[dict[str, Any]] = []
+    unknown_sectors: set[str] = set()
+    checked = 0
+    for r in roster["rows"]:
+        analyst, printed = r.get("analyst"), r.get("sector")
+        if not analyst or analyst.strip().lower() == "km signal" or not printed:
+            continue
+        sector = canonical_sector(printed, on, assignments["aliases"])
+        expected = expected_analysts(sector or "", on, assignments["assignments"])
+        if not expected:
+            unknown_sectors.add(sector or printed)
+            continue
+        checked += 1
+        if analyst.strip().lower() not in {e.lower() for e in expected}:
+            mismatches.append(
+                {"ticker": r["ticker"], "sector": sector, "printed": printed,
+                 "analyst": analyst, "expected": expected}
+            )  # fmt: skip
+    return {
+        "pass": not mismatches,
+        "rows_checked": checked,
+        "mismatches": mismatches,
+        "sectors_without_assignment": sorted(unknown_sectors),
+    }
+
+
 def check_snapshot(
     snap: dict[str, Any],
     prev: dict[str, Any] | None,
     between: list[dict[str, Any]] | None = None,
+    assignments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """`between` = snapshots after `prev` and before `snap` whose rosters could not
     serve as baseline (untrusted / missing); their stated changes still count."""
@@ -147,6 +186,12 @@ def check_snapshot(
             "appeared_over_weekend": sorted(tick - prev_tick),
         }
 
+    # 5 — printed analyst vs the assignment in force (source table on the SS page)
+    if assignments:
+        a = check_analysts(snap, assignments)
+        if a is not None:
+            results["analyst_vs_assignment"] = a
+
     applicable = [v for v in results.values() if "pass" in v]
     passed = sum(1 for v in applicable if v["pass"])
     return {
@@ -158,13 +203,15 @@ def check_snapshot(
     }
 
 
-def run_checks(snaps: list[dict[str, Any]]) -> dict[str, Any]:
+def run_checks(
+    snaps: list[dict[str, Any]], assignments: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Snapshots must already be in publication order."""
     prev: dict[str, Any] | None = None
     between: list[dict[str, Any]] = []
     tally = {"checked": 0, "all_pass": 0, "with_failures": []}
     for snap in snaps:
-        snap["checks"] = check_snapshot(snap, prev, between)
+        snap["checks"] = check_snapshot(snap, prev, between, assignments)
         tally["checked"] += 1
         if snap["checks"]["all_pass"]:
             tally["all_pass"] += 1

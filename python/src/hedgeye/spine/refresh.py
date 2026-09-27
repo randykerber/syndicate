@@ -113,7 +113,8 @@ def run(
     fidelity: Path | None = None,
     ibkr: Path | None = None,
 ) -> dict[str, Any]:
-    from . import etf_checks, holdings as H, render, render_etf, streams
+    from . import assignments, etf_checks, holdings as H, render, render_etf
+    from . import render_leads, streams
 
     report: dict[str, Any] = {"ran_at": _now(), "steps": {}}
     t0 = time.time()
@@ -136,7 +137,8 @@ def run(
 
     # 3 — check
     ss_snaps = ss_extract.load_snapshots()
-    tally = ss_checks.run_checks(ss_snaps)
+    asg = assignments.load()  # source tables on the SS page (read only)
+    tally = ss_checks.run_checks(ss_snaps, asg)
     for s in ss_snaps:
         _write_ss(s)
     ps = streams.load_snapshots("ps-daily")
@@ -191,6 +193,7 @@ def run(
         loaded: dict[str, Any] = {"ss-stocks": db.load_snapshots(ss_snaps, con)}
         for stream in streams.STREAMS:
             loaded[stream] = db.load_stream(stream, streams.load_snapshots(stream), con)
+        loaded["he_sector_assignments"] = db.load_assignments(con, asg)
     report["steps"]["load"] = loaded
 
     # 5 — holdings inputs, then render
@@ -227,6 +230,7 @@ def run(
         json.dumps(s31, indent=2, default=str) + "\n"
     )
     rendered["etf"] = str(paths.GEN_DIR / "ETF Books.md")
+    rendered["leads"] = render_leads.write(render_leads.render(asg))
     report["steps"]["render"] = rendered
 
     # 6 — staleness: input newer than output?
@@ -257,6 +261,8 @@ def run(
             stale.append(f"{name}: no export found")
         elif age is not None and age > HOLDINGS_STALE_DAYS:
             stale.append(f"{name}: {p.name} is {age} days old")
+    for p in asg["problems"]:
+        stale.append(f"assignments source table: {p}")
     report["latest_snapshot"] = latest_snap
     report["stale"] = stale
 

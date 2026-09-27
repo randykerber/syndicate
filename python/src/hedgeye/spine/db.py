@@ -97,6 +97,26 @@ CREATE TABLE IF NOT EXISTS runs (
     command  TEXT NOT NULL,
     summary  TEXT NOT NULL CHECK (json_valid(summary))
 );
+
+-- Views of the source tables on Fin `Areas/Hedgeye/Signal Strength Stocks.md`
+-- (spine/assignments.py). Rebuilt from the page on every `load`; never edited here.
+CREATE TABLE IF NOT EXISTS he_sector_assignment (
+    sector   TEXT NOT NULL,
+    analyst  TEXT NOT NULL,
+    role     TEXT NOT NULL,                   -- lead | stand-in
+    start    TEXT NOT NULL,                   -- ISO date
+    end      TEXT,                            -- ISO date, NULL = current
+    note     TEXT,
+    PRIMARY KEY (sector, analyst, start)
+);
+CREATE TABLE IF NOT EXISTS he_sector_alias (
+    printed   TEXT NOT NULL,
+    canonical TEXT NOT NULL,
+    start     TEXT NOT NULL,
+    end       TEXT,
+    note      TEXT,
+    PRIMARY KEY (printed, start)
+);
 """
 
 
@@ -161,6 +181,28 @@ def load_snapshots(
                 n_events += 1
     con.commit()
     return {"snapshots": n_snap, "roster_rows": n_rows, "events": n_events}
+
+
+def load_assignments(con: sqlite3.Connection, parsed: dict[str, Any]) -> dict[str, int]:
+    """Replace the SQLite views of the source tables with what the page says now."""
+    con.execute("DELETE FROM he_sector_assignment")
+    con.execute("DELETE FROM he_sector_alias")
+    for a in parsed["assignments"]:
+        con.execute(
+            "INSERT OR REPLACE INTO he_sector_assignment VALUES (?,?,?,?,?,?)",
+            (a.sector, a.analyst, a.role, a.start, a.end, a.note),
+        )
+    for al in parsed["aliases"]:
+        con.execute(
+            "INSERT OR REPLACE INTO he_sector_alias VALUES (?,?,?,?,?)",
+            (al.printed, al.canonical, al.start, al.end, al.note),
+        )
+    con.commit()
+    return {
+        "assignments": len(parsed["assignments"]),
+        "aliases": len(parsed["aliases"]),
+        "problems": len(parsed["problems"]),
+    }
 
 
 def record_run(con: sqlite3.Connection, command: str, summary: dict[str, Any]) -> None:

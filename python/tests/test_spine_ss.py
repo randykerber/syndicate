@@ -130,6 +130,81 @@ def test_refresh_bell_rings_only_for_new_failures() -> None:
     assert refresh.split_failures([], []) == {"new": [], "standing": [], "cleared": []}
 
 
+_SOURCE_PAGE = """
+# Signal Strength Stocks
+
+## HE sector assignments
+
+| HE sector | Analyst | Role | Start | End | Note |
+|---|---|---|---|---|---|
+| Energy | [[Fernando Valle]] | lead | 2024-01-01 | 2026-06-30 | left |
+| Energy | [[Daryl Jones]] | stand-in | 2026-07-27 | | |
+| Healthcare | [[Tom Tobin]] | lead | 2024-01-01 | | |
+| Global Technology | [[Felix Wang]] | lead | 2024-01-01 | | |
+
+¹ footnote
+
+## HE sector name aliases
+
+| Printed | Canonical | From | Until | Note |
+|---|---|---|---|---|
+| Global Tech | Global Technology | 2024-01-01 | 2026-09-24 | rename |
+"""
+
+
+def test_assignments_parse_and_query() -> None:
+    from hedgeye.spine import assignments as A
+
+    p = A.parse(_SOURCE_PAGE)
+    assert p["problems"] == []
+    assert len(p["assignments"]) == 4 and len(p["aliases"]) == 1
+    assert A.expected_analysts("Energy", "2026-05-01", p["assignments"]) == [
+        "Fernando Valle"
+    ]
+    assert A.expected_analysts("Energy", "2026-07-10", p["assignments"]) == []  # gap
+    assert A.expected_analysts("Energy", "2026-09-25", p["assignments"]) == [
+        "Daryl Jones"
+    ]
+    assert (
+        A.canonical_sector("Global Tech", "2026-05-01", p["aliases"])
+        == "Global Technology"
+    )
+    assert (
+        A.canonical_sector("Global Tech", "2026-09-26", p["aliases"]) == "Global Tech"
+    )
+    assert [a.sector for a in A.current(p["assignments"], "2026-09-27")] == [
+        "Energy", "Global Technology", "Healthcare"]  # fmt: skip
+
+
+def test_assignments_overlap_is_a_problem() -> None:
+    from hedgeye.spine import assignments as A
+
+    bad = _SOURCE_PAGE.replace(
+        "| 2024-01-01 | 2026-06-30 | left |", "| 2024-01-01 | | left |"
+    )
+    bad = bad.replace("| stand-in | 2026-07-27 |", "| lead | 2026-07-27 |")
+    p = A.parse(bad)
+    assert any("two leads overlap" in x for x in p["problems"])
+
+
+def test_analyst_vs_assignment_witness() -> None:
+    from hedgeye.spine import assignments as A
+
+    asg = A.parse(_SOURCE_PAGE)
+    snap = _snap("101", 3, [], [], ["XOM", "SHEL", "MSFT"])
+    snap["published_at"] = "2026-09-24T12:00"
+    rows = snap["roster"]["rows"]
+    rows[0].update(sector="Energy", analyst="Daryl Jones")  # stand-in: ok
+    rows[1].update(sector="Energy", analyst="Tom Tobin")  # the SHEL misprint
+    rows[2].update(sector="Global Tech", analyst="KM Signal")  # skipped
+    r = ss_checks.check_analysts(snap, asg)
+    assert r is not None and not r["pass"] and r["rows_checked"] == 2
+    assert r["mismatches"][0]["ticker"] == "SHEL"
+    assert r["mismatches"][0]["expected"] == ["Daryl Jones"]
+    tally = ss_checks.run_checks([snap], asg)
+    assert tally["with_failures"][0]["failed"] == ["analyst_vs_assignment"]
+
+
 def test_subject_grammar_rejects_other() -> None:
     assert ss_extract.parse_subject(
         "Quick Start Guide for your Signal Strength Stocks Subscription"

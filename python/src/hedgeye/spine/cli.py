@@ -104,8 +104,12 @@ def cmd_derive(a: argparse.Namespace) -> int:
 
 
 def cmd_check(a: argparse.Namespace) -> int:
+    from . import assignments
+
     snaps = ss_extract.load_snapshots()
-    tally = ss_checks.run_checks(snaps)
+    asg = assignments.load()
+    tally = ss_checks.run_checks(snaps, asg)
+    tally["assignment_source_problems"] = asg["problems"]
     for s in snaps:
         _write_snapshot(s)
     print(_dump(tally))
@@ -147,6 +151,8 @@ def cmd_check_etf(a: argparse.Namespace) -> int:
 def cmd_load(a: argparse.Namespace) -> int:
     from . import streams
 
+    from . import assignments
+
     snaps = ss_extract.load_snapshots()
     with db.connect() as con:
         summary: Any = {"ss-stocks": db.load_snapshots(snaps, con)}
@@ -154,6 +160,7 @@ def cmd_load(a: argparse.Namespace) -> int:
             summary[stream] = db.load_stream(
                 stream, streams.load_snapshots(stream), con
             )
+        summary["he_sector_assignments"] = db.load_assignments(con, assignments.load())
         db.record_run(con, "load", summary)
     print(_dump(summary))
     return 0
@@ -311,6 +318,9 @@ def cmd_render(a: argparse.Namespace) -> int:
         cmp = H.compare_to_roster(hs, latest["roster"]["rows"])
     text = render.render_ss_page(latest, diff, cmp, meta, _status())
     print(render.write_ss_page(text))
+    from . import assignments, render_leads
+
+    print(render_leads.write(render_leads.render(assignments.load())))
     return 0
 
 
