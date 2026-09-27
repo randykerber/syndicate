@@ -313,6 +313,8 @@ def extract(mailbox: str = paths.SS_MAILBOX, fetch: bool = True) -> dict[str, An
     paths.ensure_dirs()
     unkeyed_dir = paths.SNAPSHOTS_SS / "_unkeyed"
     unkeyed_dir.mkdir(exist_ok=True)
+    for stale in unkeyed_dir.glob("*.json"):
+        stale.unlink()  # derived: rebuilt from the mailbox every run
     overrides = load_overrides()
     untrusted = load_untrusted()
     root = paths.RAW_MAIL
