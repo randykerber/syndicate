@@ -154,15 +154,30 @@ def run(
                 streams._dump(s)
             )
     ss_failing = [f["feed_item_id"] for f in tally["with_failures"]]
-    etf_failing = [
-        f"{k}:{x.get('feed_item_id') or x.get('date') or i}"
-        for k, v in etf.items()
-        for i, x in enumerate(v.get("failures") or [])
-        if isinstance(x, dict)
-    ]
+    # ETF books: only the latest report of each stream is a bell candidate (Randy,
+    # 2026-09-27: no running tab of history; a disagreement matters on its day, and
+    # PS ≠ EP counts as a violation only if still unequal by end of day — which is
+    # what `ps_vs_ep_long.pass` already means; an intraday refresh warns, and the
+    # next refresh reports it cleared). History stays behind `check-etf`.
+    today: dict[str, dict[str, bool]] = {}
+    etf_failing: list[str] = []
+    for stream, snaps in (("ps-daily", ps), ("ep-weekly", wk), ("any10", a10)):
+        if not snaps:
+            continue
+        last = snaps[-1]
+        checks = {
+            k: bool(v["pass"])
+            for k, v in (last.get("checks") or {}).items()
+            if isinstance(v, dict) and "pass" in v
+        }
+        today[stream] = checks
+        etf_failing += [
+            f"{stream}:{last['feed_item_id']}:{k}" for k, ok in checks.items() if not ok
+        ]
     report["steps"]["check"] = {
         "ss": {"checked": tally["checked"], "all_pass": tally["all_pass"]},
-        "etf": {
+        "etf_today": today,
+        "etf_history": {
             k: {
                 "n_failures": len(v.get("failures") or []),
                 **{kk: vv for kk, vv in v.items() if kk != "failures"},
@@ -287,12 +302,12 @@ def format_report(r: dict[str, Any]) -> str:
         f"{k} {v.get('written', 0)}" + (f" unkeyed {v['unkeyed']}" if v.get("unkeyed") else "")
         for k, v in ex.items()))  # fmt: skip
     ck = r["steps"]["check"]
-    etf_bits = [
-        f"{k} {'ok' if not v['n_failures'] else str(v['n_failures']) + ' disagree'}"
-        for k, v in ck["etf"].items()
-    ]
+    etf_bits = []
+    for stream, checks in ck["etf_today"].items():
+        bad = [k for k, ok in checks.items() if not ok]
+        etf_bits.append(f"{stream} {'ok' if not bad else 'FAIL ' + ','.join(bad)}")
     lines.append(
-        f"check     ss {ck['ss']['all_pass']}/{ck['ss']['checked']} pass · "
+        f"check     ss {ck['ss']['all_pass']}/{ck['ss']['checked']} pass · latest "
         + " · ".join(etf_bits)
     )
     rd = r["steps"]["render"]
@@ -320,7 +335,7 @@ def format_report(r: dict[str, Any]) -> str:
         lines.append(
             "standing  "
             + " · ".join(f"{g} {n}" for g, n in groups.items())
-            + " known disagreements (ids: --json, check, check-etf)"
+            + " known (ids: --json; detail: check, check-etf)"
         )
     if f["cleared"]:
         lines.append(f"cleared   {', '.join(f['cleared'])}")
