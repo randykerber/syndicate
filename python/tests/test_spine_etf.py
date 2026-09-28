@@ -109,3 +109,20 @@ def test_ep_subjects() -> None:
         s["subject_change"]["ticker"] == "URA"
         and s["subject_change"]["action"] == "remove"
     )
+
+
+def test_ep_change_html_side_survives_span_split() -> None:
+    """HTML-only email: the side lives in its own <span>; it must stay on the header line."""
+    from hedgeye.spine import parse_ep
+
+    html = (
+        "<p><b><span>We are ADDING </span><span class='bearish'>Short</span><span>:</span></b></p>"
+        "<ul><li><span>Financials (XLF)</span></li><li>Mexico (EWW)</li></ul>"
+        "<p><b><span>We are REMOVING </span><span>Long</span><span>:</span></b></p>"
+        "<ul><li>Physical Gold (AAAU) - (41.08 - 43.5)</li></ul>"
+        "<p>How to Use ETF Pro Plus Updates:</p>"
+    )
+    changes, unparsed = parse_ep.parse_changes(parse_ep.html_to_text(html))
+    assert [(c["action"], c["side"], c["ticker"]) for c in changes] == [
+        ("add", "short", "XLF"), ("add", "short", "EWW"), ("remove", "long", "AAAU")]  # fmt: skip
+    assert unparsed == []

@@ -24,6 +24,59 @@ def _rank_sort_key(r: dict[str, Any]) -> tuple[int, float]:
     return ({"bench": 2, "km-signal": 1}.get(kind, 3), 0.0)
 
 
+KM = "KM Signal"
+
+
+def _by_sector(rows: list[dict[str, Any]]) -> list[tuple[str, list[dict[str, Any]]]]:
+    """Rows grouped by printed sector, sectors alphabetical with `KM Signal` last;
+    within a sector ranked first (1 first), then KM Signal rows, then Bench."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for r in rows:
+        groups.setdefault(r.get("sector") or "—", []).append(r)
+    order = sorted(groups, key=lambda s: (s == KM, s.lower()))
+    return [(s, sorted(groups[s], key=_rank_sort_key)) for s in order]
+
+
+def render_cheat_sheet(rows: list[dict[str, Any]]) -> str:
+    """Per sector: Best (ranked, rank shown) · KM Signal · Bench. Randy, 2026-09-28."""
+    out: list[str] = ["\n### Cheat sheet by sector\n\n"]
+    for sector, rs in _by_sector(rows):
+        out.append(f"##### {sector}\n")
+        if sector == KM:
+            out.append("- **KM Signal**: " + ", ".join(r["ticker"] for r in rs) + "\n")
+            continue
+        best = [r for r in rs if r.get("rank_kind") == "ranked"]
+        km = [r for r in rs if r.get("rank_kind") == "km-signal"]
+        bench = [r for r in rs if r.get("rank_kind") == "bench"]
+        other = [r for r in rs if r not in best and r not in km and r not in bench]
+        if best:
+            out.append("- **Best**: " + ", ".join(
+                f"{r['ticker']} ({r.get('best_idea_rank')})" for r in best) + "\n")  # fmt: skip
+        if km:
+            out.append("- **KM Signal**: " + ", ".join(r["ticker"] for r in km) + "\n")
+        if bench:
+            out.append("- **Bench**: " + ", ".join(r["ticker"] for r in bench) + "\n")
+        if other:
+            out.append("- **Other**: " + ", ".join(
+                f"{r['ticker']} ({r.get('best_idea_rank')})" for r in other) + "\n")  # fmt: skip
+    return "".join(out)
+
+
+def render_roster_by_sector(rows: list[dict[str, Any]]) -> str:
+    out: list[str] = ["\n### Roster by sector\n\n"]
+    for sector, rs in _by_sector(rows):
+        out.append(f"**{sector}** ({len(rs)})\n\n")
+        out.append("| Rank | Ticker | Analyst | Days | Signal | Entry | Recent | % |\n"
+                   "|---|---|---|---:|---|---:|---:|---:|\n")  # fmt: skip
+        for r in rs:
+            pct = r.get("pct_since_signal")
+            out.append(f"| {r.get('best_idea_rank')} | **{r['ticker']}** | {r.get('analyst')} | "
+                       f"{r.get('days_on')} | {r.get('signal_date')} | {r.get('entry_price')} | "
+                       f"{r.get('recent_price')} | {'' if pct is None else f'{pct:+.1f}'} |\n")  # fmt: skip
+        out.append("\n")
+    return "".join(out)
+
+
 def render_ss_page(
     latest: dict[str, Any],
     diff: dict[str, Any] | None,
@@ -70,6 +123,9 @@ def render_ss_page(
                 f"  - **{c['ticker']}** {c['field']}: `{c['from']}` → `{c['to']}` "
                 f"({c.get('significance')})\n"
             )
+
+    L.append(render_cheat_sheet(latest["roster"]["rows"]))
+    L.append(render_roster_by_sector(latest["roster"]["rows"]))
 
     if holdings_cmp:
         L.append("\n### Holdings vs Signal Strength\n")

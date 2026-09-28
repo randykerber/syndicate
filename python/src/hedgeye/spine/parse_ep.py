@@ -114,9 +114,18 @@ def parse_changes(text: str) -> tuple[list[dict[str, Any]], list[str]]:
 
 
 def html_to_text(html: str) -> str:
-    from bs4 import BeautifulSoup
+    """HTML-only emails (all ETF Pro changes since ~2026): block elements become line
+    breaks, inline elements do not. BeautifulSoup's get_text("\n") put every <span> on
+    its own line, so `We are ADDING <span>Short</span>:` lost its side (found 2026-09-28:
+    two short adds read as long adds and PS≠EP rang falsely)."""
+    import html as _html
 
-    return BeautifulSoup(html or "", "html.parser").get_text("\n")
+    t = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html or "")
+    t = re.sub(r"(?i)<br\s*/?>|</(p|div|li|tr|h[1-6]|ul|ol|table|blockquote)>", "\n", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    t = _html.unescape(t).replace("\xa0", " ")
+    t = re.sub(r"[ \t]+", " ", t)
+    return re.sub(r"\n\s*\n+", "\n", t).strip()
 
 
 def parse_change_email(rec: dict[str, Any]) -> dict[str, Any]:
