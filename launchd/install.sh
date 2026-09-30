@@ -12,7 +12,9 @@ for plist in "$DIR"/com.rk.*.plist; do
   if [[ "$1" == "--remove" ]]; then
     rm -f "$AGENTS/$label.plist"; echo "removed $label"; continue
   fi
-  cp "$plist" "$AGENTS/$label.plist"
+  # the plists name rstudio's uv (/opt/homebrew/bin); substitute this machine's
+  UV="$(command -v uv)"
+  sed "s#/opt/homebrew/bin/uv#$UV#" "$plist" > "$AGENTS/$label.plist"
   launchctl bootstrap "gui/$UID_" "$AGENTS/$label.plist"
   echo "installed $label"
 done
