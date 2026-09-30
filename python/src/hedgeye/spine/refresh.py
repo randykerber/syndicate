@@ -17,8 +17,6 @@ State between runs lives in `~/d/prod/hedgeye/refresh-state.json`.
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -33,9 +31,6 @@ MAILBOXES = {
     "ep-weekly": "ETF-weekly",
     "any10": "Anywhere-10",
 }
-IMPORTER = (
-    Path(__file__).resolve().parents[3] / "scratch" / "mail-import" / "import_mail.py"
-)
 STATE = paths.PROD / "refresh-state.json"
 HOLDINGS_STALE_DAYS = 3
 
@@ -69,17 +64,24 @@ def _newest_eml_stamp(mailbox: str) -> str | None:
 
 
 def pull_mail(limit: int) -> dict[str, Any]:
+    """Apple Mail → raw archive, in-process (hedgeye.mail.importer; promoted 2026-09-30)."""
+    from ..mail.importer import import_mailbox
+
     out: dict[str, Any] = {}
-    if not IMPORTER.exists():
-        return {"error": f"importer not found: {IMPORTER}"}
     for mailbox in MAILBOXES.values():
-        before = _count_eml(mailbox)
-        cmd = [sys.executable, str(IMPORTER), mailbox, "--limit", str(limit)]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        after = _count_eml(mailbox)
-        out[mailbox] = {"before": before, "after": after, "new": after - before}
-        if r.returncode != 0:
-            out[mailbox]["error"] = (r.stderr or r.stdout).strip()[-400:]
+        try:
+            r = import_mailbox(mailbox, limit=limit)
+            out[mailbox] = {"before": r["before"], "after": r["after"], "new": r["new"]}
+            if r["problems"]:
+                out[mailbox]["error"] = "; ".join(r["problems"])[:400]
+        except Exception as e:  # noqa: BLE001 — the report must say so, never hide
+            before = _count_eml(mailbox)
+            out[mailbox] = {
+                "before": before,
+                "after": before,
+                "new": 0,
+                "error": str(e)[:400],
+            }
     return out
 
 

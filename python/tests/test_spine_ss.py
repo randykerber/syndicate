@@ -470,3 +470,18 @@ def test_option_parse_and_exposure() -> None:
         holdings.classify("-IWM261120P260", "IWM NOV 20 2026 $260 PUT")[0] == "option"
     )
     assert holdings.parse_option("IWM", 100) is None
+
+
+def test_mail_archive_name_matches_scheme() -> None:
+    """Name = Date header in its own tz + sha256(Message-ID incl. brackets)[:8]."""
+    from hedgeye.mail.importer import archive_name
+
+    assert (
+        archive_name(
+            "<20260929102554.47707970.25@sailthru.com>",
+            "Tue, 29 Sep 2026 10:25:54 -0400",
+        )
+        == "2026-09-29_102554_0c79f758.eml"
+    )
+    assert archive_name("", "Tue, 29 Sep 2026 10:25:54 -0400") is None
+    assert archive_name("<x@y>", "not a date") is None
