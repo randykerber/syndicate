@@ -9,13 +9,14 @@
   <key>Label</key><string>com.rk.hedgeye-ham-download</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/opt/homebrew/bin/uv</string>
-    <string>run</string>
-    <string>--directory</string>
-    <string>/Users/rk/gh/randykerber/syndicate/python</string>
-    <string>python</string>
+    <!-- the project venv's python, not `uv run`: Homebrew unlinks uv while upgrading it
+         (missed 2026-10-01 on idlewood). The venv is built by any `uv run` in python/. -->
+    <string>/Users/rk/gh/randykerber/syndicate/python/.venv/bin/python</string>
     <string>scripts/hedgeye/download_ham_etf_holdings.py</string>
   </array>
+  <key>WorkingDirectory</key><string>/Users/rk/gh/randykerber/syndicate/python</string>
+  <!-- also at login: a Mac that was shut down does not run a missed calendar job at boot -->
+  <key>RunAtLoad</key><true/>
   <key>StartCalendarInterval</key>
   <array>
     <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer><key>Weekday</key><integer>1</integer></dict>
